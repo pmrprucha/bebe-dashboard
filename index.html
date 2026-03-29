@@ -17,197 +17,83 @@
     --warn: #e8b84b;
     --danger: #e07070;
     --blush: #e8906a;
-    --ok: #6db88a;
   }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:'Instrument Sans',sans-serif; overflow:hidden; transition:background 2s; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .bg-glow { position:fixed; inset:0; pointer-events:none; transition:background 3s; z-index:0; }
+  body.state-ok       .bg-glow { background:radial-gradient(ellipse at 30% 50%,rgba(109,184,138,.08) 0%,transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(106,174,200,.05) 0%,transparent 50%); }
+  body.state-sleeping .bg-glow { background:radial-gradient(ellipse at 50% 40%,rgba(106,174,200,.12) 0%,transparent 60%); }
+  body.state-warn     .bg-glow { background:radial-gradient(ellipse at 50% 30%,rgba(232,184,75,.1) 0%,transparent 55%); }
+  body.state-alert    .bg-glow { background:radial-gradient(ellipse at 50% 30%,rgba(224,112,112,.12) 0%,transparent 55%); }
 
-  html, body {
-    width: 100%; height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Instrument Sans', sans-serif;
-    overflow: hidden;
-    transition: background 2s ease;
-  }
+  .dashboard { width:100vw; height:100vh; display:grid; grid-template-columns:1fr 1.4fr 1fr; grid-template-rows:1fr 1fr; gap:20px; padding:32px; position:relative; z-index:1; }
 
-  /* Dynamic background glow — changes based on state */
-  .bg-glow {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    transition: background 3s ease;
-    z-index: 0;
-  }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:24px; padding:32px 36px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden; backdrop-filter:blur(20px); transition:background 2s,border-color 2s,box-shadow 2s; }
+  .card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent); }
 
-  /* States */
-  body.state-ok       .bg-glow { background: radial-gradient(ellipse at 30% 50%, rgba(109,184,138,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 50%, rgba(106,174,200,0.05) 0%, transparent 50%); }
-  body.state-sleeping .bg-glow { background: radial-gradient(ellipse at 50% 40%, rgba(106,174,200,0.12) 0%, transparent 60%); }
-  body.state-warn     .bg-glow { background: radial-gradient(ellipse at 50% 30%, rgba(232,184,75,0.1) 0%, transparent 55%); }
-  body.state-alert    .bg-glow { background: radial-gradient(ellipse at 50% 30%, rgba(224,112,112,0.12) 0%, transparent 55%); }
-
-  /* Card border glows */
-  body.state-ok       { --accent-glow: rgba(109,184,138,0.2); }
-  body.state-sleeping { --accent-glow: rgba(106,174,200,0.2); }
-  body.state-warn     { --accent-glow: rgba(232,184,75,0.25); }
-  body.state-alert    { --accent-glow: rgba(224,112,112,0.25); }
-
-  .dashboard {
-    width: 100vw;
-    height: 100vh;
-    display: grid;
-    grid-template-columns: 1fr 1.4fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 20px;
-    padding: 32px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: 32px 36px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    position: relative;
-    overflow: hidden;
-    backdrop-filter: blur(20px);
-    transition: border-color 1s, box-shadow 1s;
-  }
-
-  .card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-  }
-
-  .card-label {
-    font-size: clamp(13px, 1vw, 18px);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .card-label .dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-    opacity: 0.6;
-  }
-
-  .card-value {
-    font-family: 'Fraunces', serif;
-    font-weight: 200;
-    line-height: 1;
-    color: var(--text);
-  }
-
-  .card-sub { font-size: clamp(12px, 0.85vw, 15px); color: var(--muted); margin-top: 6px; font-weight: 500; }
+  .card-label { font-size:clamp(13px,1vw,18px); font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); display:flex; align-items:center; gap:8px; }
+  .card-label .dot { width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.6; }
+  .card-value { font-family:'Fraunces',serif; font-weight:200; line-height:1; color:var(--text); }
+  .card-sub { font-size:clamp(11px,.85vw,15px); color:var(--muted); margin-top:6px; font-weight:500; }
 
   /* HORA */
-  #card-hora {
-    grid-row: 1 / 3;
-    align-items: center;
-    text-align: center;
-    background: rgba(255,255,255,0.03);
-  }
-  #card-hora .card-value { font-size: clamp(80px, 8.5vw, 150px); letter-spacing: -4px; color: #fff; }
-  #card-hora .card-date  { font-family: 'Fraunces', serif; font-size: clamp(16px, 1.4vw, 24px); font-style: italic; color: rgba(255,255,255,0.35); margin-top: 10px; }
-  #card-hora .card-label { justify-content: center; }
+  #card-hora { grid-row:1/3; align-items:center; text-align:center; }
+  #card-hora .card-value { font-size:clamp(80px,8.5vw,150px); letter-spacing:-4px; color:#fff; }
+  #card-hora .card-date  { font-family:'Fraunces',serif; font-size:clamp(16px,1.4vw,24px); font-style:italic; color:rgba(255,255,255,.35); margin-top:10px; }
+  #card-hora .card-label { justify-content:center; }
 
   /* ESTADO */
-  #card-estado { grid-column: 2; grid-row: 1; transition: background 2s, border-color 2s; }
-  .estado-icon  { font-size: clamp(36px, 3.5vw, 64px); line-height: 1; }
-  .estado-text  { font-family: 'Fraunces', serif; font-size: clamp(26px, 2.8vw, 50px); font-weight: 300; }
-  .estado-timer { font-family: 'Fraunces', serif; font-size: clamp(44px, 4.8vw, 84px); font-weight: 200; letter-spacing: -2px; line-height: 1; }
+  #card-estado { grid-column:2; grid-row:1; }
+  .estado-icon  { font-size:clamp(36px,3.5vw,64px); line-height:1; }
+  .estado-text  { font-family:'Fraunces',serif; font-size:clamp(26px,2.8vw,50px); font-weight:300; }
+  .estado-timer { font-family:'Fraunces',serif; font-size:clamp(44px,4.8vw,84px); font-weight:200; letter-spacing:-2px; line-height:1; }
 
-  /* ÚLTIMA REFEIÇÃO */
-  #card-refeicao { grid-column: 3; grid-row: 1; transition: background 2s, border-color 2s; }
+  /* ÚLTIMA ALIMENTAÇÃO */
+  #card-ref { grid-column:3; grid-row:1; transition:background 2s,border-color 2s; }
 
   /* PRÓXIMA SESTA */
-  #card-next { grid-column: 2; grid-row: 2; }
+  #card-next { grid-column:2; grid-row:2; }
 
   /* DEITAR */
-  #card-deitar { grid-column: 3; grid-row: 2; }
+  #card-deitar { grid-column:3; grid-row:2; }
 
-  /* Sleep pulse */
   @keyframes sleepPulse { 0%,100%{opacity:.12;transform:scale(1)} 50%{opacity:.22;transform:scale(1.04)} }
-  .sleep-glow {
-    position: absolute; inset: 0; border-radius: 24px;
-    background: radial-gradient(ellipse at 50% 50%, rgba(106,174,200,0.2), transparent 70%);
-    animation: sleepPulse 4s ease-in-out infinite;
-    pointer-events: none;
-  }
-
-  /* Alert pulse */
+  .sleep-glow { position:absolute; inset:0; border-radius:24px; background:radial-gradient(ellipse at 50% 50%,rgba(106,174,200,.2),transparent 70%); animation:sleepPulse 4s ease-in-out infinite; pointer-events:none; }
   @keyframes alertPulse { 0%,100%{opacity:.1} 50%{opacity:.2} }
-  .alert-glow {
-    position: absolute; inset: 0; border-radius: 24px;
-    background: radial-gradient(ellipse at 50% 30%, rgba(224,112,112,0.25), transparent 60%);
-    animation: alertPulse 2s ease-in-out infinite;
-    pointer-events: none;
-  }
+  .alert-glow { position:absolute; inset:0; border-radius:24px; background:radial-gradient(ellipse at 50% 30%,rgba(224,112,112,.25),transparent 60%); animation:alertPulse 2s ease-in-out infinite; pointer-events:none; }
 
-  /* Progress bar */
-  .progress-track { width:100%; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; margin-top:12px; }
+  .progress-track { width:100%; height:4px; background:rgba(255,255,255,.06); border-radius:2px; overflow:hidden; margin-top:12px; }
   .progress-fill  { height:100%; border-radius:2px; transition:width 1s linear; }
 
-  .val-xl { font-size: clamp(48px, 5vw, 90px); }
-  .val-lg  { font-size: clamp(32px, 3.2vw, 58px); }
-  .val-md  { font-size: clamp(22px, 2vw, 36px); }
+  .val-xl { font-size:clamp(48px,5vw,90px); }
+  .val-lg  { font-size:clamp(32px,3.2vw,58px); }
 
-  .accent-sage   { color: var(--sage); }
-  .accent-sky    { color: var(--sky); }
-  .accent-warn   { color: var(--warn); }
-  .accent-danger { color: var(--danger); }
-  .accent-blush  { color: var(--blush); }
-  .accent-white  { color: white; }
+  .c-sage   { color:var(--sage); }
+  .c-sky    { color:var(--sky); }
+  .c-warn   { color:var(--warn); }
+  .c-danger { color:var(--danger); }
+  .c-blush  { color:var(--blush); }
 
-  .name-badge {
-    position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
-    font-family: 'Fraunces', serif; font-style: italic;
-    font-size: clamp(13px, 1.1vw, 18px);
-    color: rgba(255,255,255,0.18); font-weight: 300; letter-spacing: 3px;
-    z-index: 10; pointer-events: none;
-  }
+  .name-badge { position:fixed; top:18px; left:50%; transform:translateX(-50%); font-family:'Fraunces',serif; font-style:italic; font-size:clamp(13px,1.1vw,18px); color:rgba(255,255,255,.18); font-weight:300; letter-spacing:3px; z-index:10; pointer-events:none; }
 
-  .sync-dot {
-    position: fixed; bottom: 18px; right: 24px;
-    display: flex; align-items: center; gap: 7px;
-    font-size: 11px; color: rgba(255,255,255,0.18); font-weight: 500; z-index: 10;
-  }
-  .sync-dot::before { content:''; width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.2); display:block; }
-  .sync-dot.ok::before      { background: var(--sage); }
-  .sync-dot.err::before     { background: var(--danger); }
-  .sync-dot.syncing::before { background: var(--warn); animation: blink 1s infinite; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .sync-dot { position:fixed; bottom:18px; right:24px; display:flex; align-items:center; gap:7px; font-size:11px; color:rgba(255,255,255,.18); font-weight:500; z-index:10; }
+  .sync-dot::before { content:''; width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.2); display:block; }
+  .sync-dot.ok::before      { background:var(--sage); }
+  .sync-dot.err::before     { background:var(--danger); }
+  .sync-dot.syncing::before { background:var(--warn); animation:blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-  .feed-label {
-    font-size: clamp(11px, 0.8vw, 14px);
-    color: var(--muted);
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    margin-top: 4px;
-  }
+  .ref-tipo   { font-size:clamp(12px,.9vw,16px); font-weight:600; letter-spacing:.5px; margin-top:6px; }
+  .ref-detalhe{ font-size:clamp(11px,.8vw,14px); color:var(--muted); margin-top:6px; line-height:1.4; max-height:3em; overflow:hidden; }
 </style>
 </head>
 <body class="state-ok">
-
 <div class="bg-glow"></div>
 <div class="name-badge">🌿 martim</div>
 
 <div class="dashboard">
 
-  <!-- HORA -->
   <div class="card" id="card-hora">
     <div class="card-label"><div class="dot"></div>Hora</div>
     <div>
@@ -217,7 +103,6 @@
     <div style="height:1px"></div>
   </div>
 
-  <!-- ESTADO -->
   <div class="card" id="card-estado">
     <div class="card-label" id="estadoLabel"><div class="dot"></div>Estado</div>
     <div style="display:flex;align-items:center;gap:20px;">
@@ -235,32 +120,29 @@
     </div>
   </div>
 
-  <!-- ÚLTIMA REFEIÇÃO -->
-  <div class="card" id="card-refeicao">
-    <div class="card-label"><div class="dot"></div>Última refeição</div>
+  <div class="card" id="card-ref">
+    <div class="card-label"><div class="dot"></div>Última alimentação</div>
     <div>
       <div class="card-value val-xl" id="refSince">–</div>
-      <div class="feed-label" id="refType"></div>
-      <div class="card-sub" id="refDetail" style="margin-top:8px;font-size:clamp(11px,0.8vw,14px);line-height:1.4;"></div>
+      <div class="ref-tipo" id="refTipo"></div>
+      <div class="ref-detalhe" id="refDetalhe"></div>
     </div>
     <div class="card-sub" id="refHora"></div>
   </div>
 
-  <!-- PRÓXIMA SESTA -->
   <div class="card" id="card-next">
     <div class="card-label" id="nextLabel"><div class="dot"></div>Próxima sesta</div>
     <div>
-      <div class="card-value val-xl accent-sky" id="nextTime">–</div>
+      <div class="card-value val-xl c-sky" id="nextTime">–</div>
       <div class="card-sub" id="nextSub"></div>
     </div>
     <div class="card-sub" id="nextDetail"></div>
   </div>
 
-  <!-- DEITAR -->
   <div class="card" id="card-deitar">
     <div class="card-label"><div class="dot"></div>Hora de deitar</div>
     <div>
-      <div class="card-value val-xl accent-sage" id="deitarTime">–</div>
+      <div class="card-value val-xl c-sage" id="deitarTime">–</div>
       <div class="card-sub" id="deitarSub"></div>
     </div>
     <div class="card-sub" id="deitarDetail"></div>
@@ -271,390 +153,300 @@
 <div class="sync-dot" id="syncDot">sincronizado</div>
 
 <script>
-// ═══════════════════════════════════════════════
-// CONFIG
-// ═══════════════════════════════════════════════
+// ═══ CONFIG ════════════════════════════════════
 const SUPABASE_URL      = 'https://wkceuiexgauziaqyssag.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrY2V1aWV4Z2F1emlhcXlzc2FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MzAxMjMsImV4cCI6MjA5MDMwNjEyM30.VO5m57Zlzml4V05M5Sdh3D6WP1Eve1-o55bPOCOIl-g'
 const CHILD_ID          = 'c2c0847c-6629-4160-bcb6-89b87adfe7c6'
+// ═══════════════════════════════════════════════
 
-const H = {
-  'apikey': SUPABASE_ANON_KEY,
-  'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-  'Content-Type': 'application/json'
-}
+const H = { 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer '+SUPABASE_ANON_KEY, 'Content-Type':'application/json' }
 
-async function q(table, params='') {
+async function q(table,params='') {
   try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`, { headers: H })
-    if (!r.ok) return null
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`,{headers:H})
+    if(!r.ok) return null
     return await r.json()
   } catch { return null }
 }
 
-// ── Utils ──────────────────────────────────────
-function toMins(t) {
-  if (!t) return null
-  const [h,m] = t.split(':').map(Number)
-  return h*60+m
-}
-function fromMins(m) {
-  if (m==null) return '–'
-  m = ((m%1440)+1440)%1440
-  return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')
-}
-function today() { return new Date().toISOString().slice(0,10) }
-function fmtElapsed(secs) {
-  if (secs < 60) return `${secs}s`
-  const m = Math.floor(secs/60), h = Math.floor(m/60)
-  if (h===0) return `${m}min`
-  return `${h}h${m%60>0?' '+(m%60)+'min':''}`
-}
-function fmtTimer(secs) {
-  const m=Math.floor(secs/60), h=Math.floor(m/60)
-  const mm=String(m%60).padStart(2,'0'), ss=String(secs%60).padStart(2,'0')
-  return h===0 ? `${m}:${ss}` : `${h}:${mm}:${ss}`
-}
-function horaToMs(hora) {
-  if (!hora) return null
-  const [h,m] = hora.split(':').map(Number)
-  const d = new Date(); d.setHours(h,m,0,0); return d.getTime()
-}
+function toMins(t){if(!t)return null;const[h,m]=t.split(':').map(Number);return h*60+m}
+function fromMins(m){if(m==null)return'–';m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')}
+function today(){return new Date().toISOString().slice(0,10)}
+function fmtElapsed(s){if(s<60)return s+'s';const m=Math.floor(s/60),h=Math.floor(m/60);return h===0?m+'min':h+'h'+(m%60>0?' '+(m%60)+'min':'')}
+function fmtTimer(s){const m=Math.floor(s/60),h=Math.floor(m/60),mm=String(m%60).padStart(2,'0'),ss=String(s%60).padStart(2,'0');return h===0?m+':'+ss:h+':'+mm+':'+ss}
+function horaToMs(hora){if(!hora)return null;const[h,m]=hora.split(':').map(Number);const d=new Date();d.setHours(h,m,0,0);return d.getTime()}
 
-// ── Clock ──────────────────────────────────────
-function updateClock() {
-  const n = new Date()
-  document.getElementById('clockTime').textContent =
-    String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')
+function updateClock(){
+  const n=new Date()
+  document.getElementById('clockTime').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')
   const days=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado']
   const months=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
-  document.getElementById('clockDate').textContent =
-    `${days[n.getDay()]}, ${n.getDate()} ${months[n.getMonth()]}`
+  document.getElementById('clockDate').textContent=days[n.getDay()]+', '+n.getDate()+' '+months[n.getMonth()]
 }
 
-// ── State ──────────────────────────────────────
+const LADO_PT = {E:'Esquerdo',D:'Direito',A:'Ambos',M:'Mamadeira'}
+
 let S = {
-  sleeping: false,        // sesta em curso
-  sleepingNight: false,   // sono nocturno (dormiu sem acordou)
-  sleepStart: null,
-  acordou: null,
-  dormiu: null,
-  lastFeedMs: null,
-  lastFeedType: '',
-  lastFeedDetail: '',
-  lastFeedHora: '',
-  nextSesta: null,
-  nextSestaNum: 0,
-  deitar: null,
-  deitarMin: null,
-  deitarMax: null,
+  sleeping:false, sleepingNight:false, sleepStart:null,
+  acordou:null, dormiu:null, deitar:null, deitarMin:null, deitarMax:null,
+  nextSesta:null, nextSestaNum:0,
+  // última alimentação (amamentação ou refeição, o mais recente)
+  lastMs:null, lastTipo:'', lastDetalhe:'', lastHora:''
 }
 
-// ── Fetch ──────────────────────────────────────
-async function fetchData() {
+async function fetchData(){
   setSyncStatus('syncing')
-  const td = today()
-
-  const [kids, sleep, feeds, meals] = await Promise.all([
-    q('children', `id=eq.${CHILD_ID}&select=*`),
-    q('sleep_events', `child_id=eq.${CHILD_ID}&data_date=eq.${td}&select=*`),
-    q('feeds', `child_id=eq.${CHILD_ID}&data_date=eq.${td}&select=*&order=created_at.desc&limit=5`),
-    q('meals', `child_id=eq.${CHILD_ID}&data_date=eq.${td}&select=*&order=hora.desc&limit=1`),
+  const td=today()
+  const [kids,sleep,feeds,meals]=await Promise.all([
+    q('children',`id=eq.${CHILD_ID}&select=*`),
+    q('sleep_events',`child_id=eq.${CHILD_ID}&data_date=eq.${td}&select=*`),
+    q('feeds',`child_id=eq.${CHILD_ID}&data_date=eq.${td}&select=*&order=created_at.desc&limit=5`),
+    q('meals',`child_id=eq.${CHILD_ID}&data_date=eq.${td}&select=*&order=hora.desc&limit=1`),
   ])
 
-  if (!sleep) { setSyncStatus('err'); return }
+  if(!sleep){setSyncStatus('err');return}
   setSyncStatus('ok')
 
-  const child = kids?.[0] || {}
-  const p = sleep?.[0]?.payload || {}
+  const child=kids?.[0]||{}
+  const p=sleep?.[0]?.payload||{}
 
-  S.deitarMin = child.deitar_min || '19:30'
-  S.deitarMax = child.deitar_max || '20:00'
-  S.acordou   = p.acordou || null
-  S.dormiu    = p.dormiu  || null
-  S.deitar    = p.deitar  || null
+  S.deitarMin=child.deitar_min||'19:30'
+  S.deitarMax=child.deitar_max||'20:00'
+  S.acordou=p.acordou||null
+  S.dormiu=p.dormiu||null
+  S.deitar=p.deitar||null
 
-  // Sono nocturno: dormiu preenchido mas acordou vazio
+  // Sono nocturno: dormiu preenchido E acordou vazio
   S.sleepingNight = !!(S.dormiu && !S.acordou)
 
-  // Sesta em curso
-  S.sleeping = false
-  S.sleepStart = null
-  if (!S.sleepingNight) {
-    for (const n of [1,2,3]) {
-      const ini = p[`s${n}_ini`], fim = p[`s${n}_fim`]
-      if (ini && !fim) { S.sleeping = true; S.sleepStart = horaToMs(ini); break }
+  // Sesta em curso (só se não está em sono nocturno)
+  S.sleeping=false; S.sleepStart=null
+  if(!S.sleepingNight){
+    for(const n of[1,2,3]){
+      const ini=p[`s${n}_ini`],fim=p[`s${n}_fim`]
+      if(ini&&!fim){S.sleeping=true;S.sleepStart=horaToMs(ini);break}
     }
   }
 
   // Próxima sesta
-  S.nextSesta = null; S.nextSestaNum = 0
-  const alvos = [p.alvo1, p.alvo2, p.alvo3]
-  for (let i=0; i<3; i++) {
-    const ini = p[`s${i+1}_ini`]
-    if (!ini && alvos[i] && alvos[i]!=='–') { S.nextSesta=alvos[i]; S.nextSestaNum=i+1; break }
+  S.nextSesta=null;S.nextSestaNum=0
+  const alvos=[p.alvo1,p.alvo2,p.alvo3]
+  for(let i=0;i<3;i++){
+    const ini=p[`s${i+1}_ini`]
+    if(!ini&&alvos[i]&&alvos[i]!=='–'){S.nextSesta=alvos[i];S.nextSestaNum=i+1;break}
   }
 
-  // Última alimentação — feeds + meals, o mais recente
-  let lastMs=null, lastType='', lastDetail='', lastHora=''
+  // ── Última alimentação: amamentação OU refeição, o mais recente ──
+  let candidates = []
 
-  if (feeds?.length) {
-    const f = feeds[0]
-    const lado = { E:'Esquerdo', D:'Direito', A:'Ambos', M:'Mamadeira' }
-    const ms = f.created_at
+  // Amamentação — terminou em created_at + duracao_seg
+  if(feeds?.length){
+    const f=feeds[0]
+    const endMs=f.created_at
       ? new Date(f.created_at).getTime()+(f.duracao_seg||0)*1000
       : horaToMs(f.hora)
-    if (ms) {
-      lastMs=ms; lastType='Amamentação'; lastHora=f.hora
-      lastDetail = f.lado ? lado[f.lado]||'' : ''
-    }
+    if(endMs) candidates.push({
+      ms: endMs,
+      tipo: 'Amamentação',
+      detalhe: f.lado?(LADO_PT[f.lado]||f.lado):'',
+      hora: f.hora
+    })
   }
 
-  if (meals?.length) {
-    const m = meals[0]
-    const mealMs = horaToMs(m.hora)
-    if (mealMs && (!lastMs || mealMs > lastMs)) {
-      lastMs=mealMs; lastType='Refeição'; lastHora=m.hora
-      lastDetail = m.obs || m.descricao || ''
-    }
+  // Refeição — usar hora
+  if(meals?.length){
+    const m=meals[0]
+    const mealMs=horaToMs(m.hora)
+    if(mealMs) candidates.push({
+      ms: mealMs,
+      tipo: 'Refeição',
+      detalhe: m.obs||m.descricao||'',
+      hora: m.hora
+    })
   }
 
-  S.lastFeedMs     = lastMs
-  S.lastFeedType   = lastType
-  S.lastFeedDetail = lastDetail
-  S.lastFeedHora   = lastHora
+  if(candidates.length){
+    // O mais recente
+    const best = candidates.reduce((a,b)=>a.ms>b.ms?a:b)
+    S.lastMs      = best.ms
+    S.lastTipo    = best.tipo
+    S.lastDetalhe = best.detalhe
+    S.lastHora    = best.hora
+  } else {
+    S.lastMs=null; S.lastTipo=''; S.lastDetalhe=''; S.lastHora=''
+  }
 }
 
-// ── Determine global state ─────────────────────
-function getGlobalState() {
-  const now = Date.now()
-
-  // A dormir (sesta ou nocturno)
-  if (S.sleeping || S.sleepingNight) return 'sleeping'
-
-  // Verificar alertas de refeição
-  if (S.lastFeedMs) {
-    const secs = Math.floor((now - S.lastFeedMs) / 1000)
-    if (secs > 10800) return 'alert' // >3h
-    if (secs > 7200)  return 'warn'  // >2h
+function getGlobalState(){
+  const now=Date.now()
+  if(S.sleeping||S.sleepingNight) return 'sleeping'
+  if(S.lastMs){
+    const s=Math.floor((now-S.lastMs)/1000)
+    if(s>10800) return 'alert'
+    if(s>7200)  return 'warn'
   }
-
-  // Verificar se sesta está atrasada
-  if (S.nextSesta) {
-    const nextMs = horaToMs(S.nextSesta)
-    if (nextMs && now > nextMs + 15*60*1000) return 'warn'
-    if (nextMs && now > nextMs + 45*60*1000) return 'alert'
+  if(S.nextSesta){
+    const ms=horaToMs(S.nextSesta)
+    if(ms&&now>ms+45*60*1000) return 'alert'
+    if(ms&&now>ms+15*60*1000) return 'warn'
   }
-
   return 'ok'
 }
 
-// ── Render ─────────────────────────────────────
-function render() {
-  const now = Date.now()
-  const globalState = getGlobalState()
-
-  // Body class para cores de fundo
-  document.body.className = 'state-' + globalState
+function render(){
+  const now=Date.now()
+  const gs=getGlobalState()
+  document.body.className='state-'+gs
 
   // ── ESTADO ──────────────────────────────────
-  const estadoCard  = document.getElementById('card-estado')
-  const estadoIcon  = document.getElementById('estadoIcon')
-  const estadoText  = document.getElementById('estadoText')
-  const estadoTimer = document.getElementById('estadoTimer')
-  const estadoSub   = document.getElementById('estadoSub')
-  const progressTrack = document.getElementById('progressTrack')
-  const progressFill  = document.getElementById('progressFill')
+  const ec=document.getElementById('card-estado')
+  const ei=document.getElementById('estadoIcon')
+  const et=document.getElementById('estadoText')
+  const etr=document.getElementById('estadoTimer')
+  const es=document.getElementById('estadoSub')
+  const pt=document.getElementById('progressTrack')
+  const pf=document.getElementById('progressFill')
+  ec.querySelectorAll('.sleep-glow,.alert-glow').forEach(e=>e.remove())
 
-  // Limpar glows
-  estadoCard.querySelectorAll('.sleep-glow,.alert-glow').forEach(e=>e.remove())
+  if(S.sleepingNight){
+    ec.style.background='rgba(20,30,50,.4)'; ec.style.borderColor='rgba(106,174,200,.2)'
+    const g=document.createElement('div');g.className='sleep-glow';ec.appendChild(g)
+    ei.textContent='🌙'; et.textContent='A dormir (noite)'; et.style.color='var(--sky)'
+    etr.style.display='block'; etr.className='estado-timer c-sky'
+    const refMs=horaToMs(S.dormiu)
+    etr.textContent=refMs?fmtTimer(Math.floor((now-refMs)/1000)):'–'
+    es.textContent=S.dormiu?'Desde as '+S.dormiu:''; pt.style.display='none'
 
-  if (S.sleepingNight) {
-    estadoCard.style.background = 'rgba(106,174,200,0.07)'
-    estadoCard.style.borderColor = 'rgba(106,174,200,0.2)'
-    const g=document.createElement('div'); g.className='sleep-glow'; estadoCard.appendChild(g)
-    estadoIcon.textContent='🌙'
-    estadoText.textContent='A dormir (noite)'
-    estadoText.style.color='var(--sky)'
-    estadoTimer.style.display='block'
-    estadoTimer.className='estado-timer accent-sky'
-    const refMs = horaToMs(S.dormiu)
-    estadoTimer.textContent = refMs ? fmtTimer(Math.floor((now-refMs)/1000)) : '–'
-    estadoSub.textContent = S.dormiu ? `Desde as ${S.dormiu}` : ''
-    progressTrack.style.display='none'
-
-  } else if (S.sleeping && S.sleepStart) {
-    estadoCard.style.background = 'rgba(106,174,200,0.07)'
-    estadoCard.style.borderColor = 'rgba(106,174,200,0.2)'
-    const g=document.createElement('div'); g.className='sleep-glow'; estadoCard.appendChild(g)
-    estadoIcon.textContent='😴'
-    estadoText.textContent='A dormir (sesta)'
-    estadoText.style.color='var(--sky)'
-    estadoTimer.style.display='block'
-    estadoTimer.className='estado-timer accent-sky'
-    estadoTimer.textContent=fmtTimer(Math.floor((now-S.sleepStart)/1000))
-    estadoSub.textContent=`Começou às ${new Date(S.sleepStart).getHours().toString().padStart(2,'0')}:${new Date(S.sleepStart).getMinutes().toString().padStart(2,'0')}`
-    progressTrack.style.display='none'
+  } else if(S.sleeping&&S.sleepStart){
+    ec.style.background='rgba(106,174,200,.07)'; ec.style.borderColor='rgba(106,174,200,.2)'
+    const g=document.createElement('div');g.className='sleep-glow';ec.appendChild(g)
+    ei.textContent='😴'; et.textContent='A dormir (sesta)'; et.style.color='var(--sky)'
+    etr.style.display='block'; etr.className='estado-timer c-sky'
+    etr.textContent=fmtTimer(Math.floor((now-S.sleepStart)/1000))
+    const sh=new Date(S.sleepStart)
+    es.textContent='Começou às '+String(sh.getHours()).padStart(2,'0')+':'+String(sh.getMinutes()).padStart(2,'0')
+    pt.style.display='none'
 
   } else {
-    // Acordado
-    estadoCard.style.background = globalState==='alert' ? 'rgba(224,112,112,0.06)' : globalState==='warn' ? 'rgba(232,184,75,0.05)' : 'rgba(255,255,255,0.03)'
-    estadoCard.style.borderColor = globalState==='alert' ? 'rgba(224,112,112,0.25)' : globalState==='warn' ? 'rgba(232,184,75,0.2)' : 'var(--border)'
-    if (globalState==='alert') { const g=document.createElement('div'); g.className='alert-glow'; estadoCard.appendChild(g) }
-
-    estadoIcon.textContent='☀️'
-    estadoText.textContent='Acordado'
-    estadoText.style.color = globalState==='alert' ? 'var(--danger)' : globalState==='warn' ? 'var(--warn)' : 'var(--warn)'
-
-    const refMs = horaToMs(S.acordou)
-    if (refMs) {
-      const secs = Math.max(0, Math.floor((now-refMs)/1000))
-      estadoTimer.style.display='block'
-      estadoTimer.textContent = fmtElapsed(secs)
-      estadoTimer.className = 'estado-timer ' + (globalState==='alert'?'accent-danger':globalState==='warn'?'accent-warn':'accent-warn')
-
-      if (S.nextSesta) {
-        const nextMs = horaToMs(S.nextSesta)
-        if (nextMs) {
-          const total = nextMs - refMs
-          const done  = now - refMs
-          const pct   = Math.min(100, Math.max(0, done/total*100))
-          progressTrack.style.display='block'
-          progressFill.style.width = pct+'%'
-          progressFill.style.background = pct>90?'var(--danger)':pct>70?'var(--warn)':'var(--sage)'
-          estadoSub.textContent = now>nextMs ? '🔔 Hora da sesta!' : `${Math.round(pct)}% até à ${S.nextSestaNum}ª sesta`
+    ec.style.background=gs==='alert'?'rgba(224,112,112,.06)':gs==='warn'?'rgba(232,184,75,.05)':'rgba(255,255,255,.03)'
+    ec.style.borderColor=gs==='alert'?'rgba(224,112,112,.25)':gs==='warn'?'rgba(232,184,75,.2)':'var(--border)'
+    if(gs==='alert'){const g=document.createElement('div');g.className='alert-glow';ec.appendChild(g)}
+    ei.textContent='☀️'; et.textContent='Acordado'
+    et.style.color=gs==='alert'?'var(--danger)':'var(--warn)'
+    const refMs=horaToMs(S.acordou)
+    if(refMs){
+      const secs=Math.max(0,Math.floor((now-refMs)/1000))
+      etr.style.display='block'; etr.textContent=fmtElapsed(secs)
+      etr.className='estado-timer '+(gs==='alert'?'c-danger':gs==='warn'?'c-warn':'c-warn')
+      if(S.nextSesta){
+        const nms=horaToMs(S.nextSesta)
+        if(nms){
+          const pct=Math.min(100,Math.max(0,(now-refMs)/(nms-refMs)*100))
+          pt.style.display='block'
+          pf.style.width=pct+'%'
+          pf.style.background=pct>90?'var(--danger)':pct>70?'var(--warn)':'var(--sage)'
+          es.textContent=now>nms?'🔔 Hora da sesta!':Math.round(pct)+'% até à '+S.nextSestaNum+'ª sesta'
         }
-      } else {
-        progressTrack.style.display='none'
-        estadoSub.textContent = S.acordou ? `Acordou às ${S.acordou}` : ''
-      }
+      } else { pt.style.display='none'; es.textContent=S.acordou?'Acordou às '+S.acordou:'' }
     } else {
-      estadoTimer.style.display='none'
-      estadoSub.textContent='Regista a hora de acordar na app'
-      progressTrack.style.display='none'
+      etr.style.display='none'; es.textContent='Regista a hora de acordar na app'; pt.style.display='none'
     }
   }
 
-  // ── ÚLTIMA REFEIÇÃO ────────────────────────────
-  const refCard   = document.getElementById('card-refeicao')
-  const refSince  = document.getElementById('refSince')
-  const refType   = document.getElementById('refType')
-  const refDetail = document.getElementById('refDetail')
-  const refHora   = document.getElementById('refHora')
+  // ── ÚLTIMA ALIMENTAÇÃO ─────────────────────────
+  const rc  = document.getElementById('card-ref')
+  const rs  = document.getElementById('refSince')
+  const rt  = document.getElementById('refTipo')
+  const rd  = document.getElementById('refDetalhe')
+  const rh  = document.getElementById('refHora')
 
-  if (S.lastFeedMs) {
-    const secs = Math.floor((now-S.lastFeedMs)/1000)
-    refSince.textContent = fmtElapsed(secs)
-
-    if (secs > 10800) {
-      refSince.className='card-value val-xl accent-danger'
-      refCard.style.background='rgba(224,112,112,0.06)'
-      refCard.style.borderColor='rgba(224,112,112,0.2)'
-    } else if (secs > 7200) {
-      refSince.className='card-value val-xl accent-warn'
-      refCard.style.background='rgba(232,184,75,0.05)'
-      refCard.style.borderColor='rgba(232,184,75,0.15)'
+  if(S.lastMs){
+    const secs=Math.floor((now-S.lastMs)/1000)
+    rs.textContent=fmtElapsed(secs)
+    if(secs>10800){
+      rs.className='card-value val-xl c-danger'
+      rc.style.background='rgba(224,112,112,.07)'; rc.style.borderColor='rgba(224,112,112,.25)'
+    } else if(secs>7200){
+      rs.className='card-value val-xl c-warn'
+      rc.style.background='rgba(232,184,75,.06)'; rc.style.borderColor='rgba(232,184,75,.2)'
     } else {
-      refSince.className='card-value val-xl accent-sage'
-      refCard.style.background='rgba(109,184,138,0.05)'
-      refCard.style.borderColor='rgba(109,184,138,0.12)'
+      rs.className='card-value val-xl c-sage'
+      rc.style.background='rgba(109,184,138,.06)'; rc.style.borderColor='rgba(109,184,138,.15)'
     }
-
-    refType.textContent = S.lastFeedType
-    refDetail.textContent = S.lastFeedDetail || ''
-    refHora.textContent = S.lastFeedHora ? `às ${S.lastFeedHora}` : ''
+    rt.textContent=S.lastTipo
+    rt.style.color=secs>10800?'var(--danger)':secs>7200?'var(--warn)':'var(--sage)'
+    rd.textContent=S.lastDetalhe||''
+    rh.textContent=S.lastHora?'às '+S.lastHora:''
   } else {
-    refSince.textContent='–'
-    refSince.className='card-value val-xl'
-    refType.textContent=''
-    refDetail.textContent='Sem registos hoje'
-    refHora.textContent=''
-    refCard.style.background=''
-    refCard.style.borderColor=''
+    rs.textContent='–'; rs.className='card-value val-xl'
+    rt.textContent=''; rd.textContent='Sem registos hoje'; rh.textContent=''
+    rc.style.background=''; rc.style.borderColor=''
   }
 
   // ── PRÓXIMA SESTA ──────────────────────────────
-  const nextLabel  = document.getElementById('nextLabel')
-  const nextTime   = document.getElementById('nextTime')
-  const nextSub    = document.getElementById('nextSub')
-  const nextDetail = document.getElementById('nextDetail')
+  const nl=document.getElementById('nextLabel')
+  const nt=document.getElementById('nextTime')
+  const ns=document.getElementById('nextSub')
+  const nd=document.getElementById('nextDetail')
 
-  if (S.sleeping) {
-    nextLabel.innerHTML='<div class="dot" style="background:var(--sky)"></div>Sesta atual'
-    nextTime.textContent='😴'
-    nextTime.className='card-value val-xl accent-sky'
-    const dur = S.sleepStart ? Math.floor((now-S.sleepStart)/60000) : 0
-    nextSub.textContent=`${dur} minutos`
-    nextDetail.textContent=''
-  } else if (S.nextSesta) {
-    nextLabel.innerHTML=`<div class="dot" style="background:var(--sky)"></div>${S.nextSestaNum}ª Sesta`
-    nextTime.textContent=S.nextSesta
-    const nextMs=horaToMs(S.nextSesta)
-    if (nextMs) {
-      const diff=Math.round((nextMs-now)/60000)
-      if (diff>0) {
-        nextTime.className='card-value val-xl accent-sky'
-        nextSub.textContent=`em ${fmtElapsed(diff*60)}`
-        nextSub.style.color='var(--muted)'
-      } else {
-        nextTime.className='card-value val-xl accent-warn'
-        nextSub.textContent='🔔 É hora da sesta!'
-        nextSub.style.color='var(--warn)'
-      }
+  if(S.sleeping){
+    nl.innerHTML='<div class="dot" style="background:var(--sky)"></div>Sesta atual'
+    nt.textContent='😴'; nt.className='card-value val-xl c-sky'
+    const dur=S.sleepStart?Math.floor((now-S.sleepStart)/60000):0
+    ns.textContent=dur+'min'; nd.textContent=''
+  } else if(S.nextSesta){
+    nl.innerHTML=`<div class="dot" style="background:var(--sky)"></div>${S.nextSestaNum}ª Sesta`
+    nt.textContent=S.nextSesta
+    const nms=horaToMs(S.nextSesta)
+    if(nms){
+      const diff=Math.round((nms-now)/60000)
+      if(diff>0){nt.className='card-value val-xl c-sky';ns.textContent='em '+fmtElapsed(diff*60);ns.style.color='var(--muted)'}
+      else{nt.className='card-value val-xl c-warn';ns.textContent='🔔 É hora da sesta!';ns.style.color='var(--warn)'}
     }
-    nextDetail.textContent=''
+    nd.textContent=''
   } else {
-    nextLabel.innerHTML='<div class="dot"></div>Próxima sesta'
-    nextTime.textContent='–'
-    nextTime.className='card-value val-xl'
-    nextSub.textContent='sem mais sestas previstas'
-    nextDetail.textContent=''
+    nl.innerHTML='<div class="dot"></div>Próxima sesta'
+    nt.textContent='–'; nt.className='card-value val-xl'
+    ns.textContent='sem mais sestas previstas'; nd.textContent=''
   }
 
   // ── DEITAR ─────────────────────────────────────
-  const deitarTime   = document.getElementById('deitarTime')
-  const deitarSub    = document.getElementById('deitarSub')
-  const deitarDetail = document.getElementById('deitarDetail')
+  const dt=document.getElementById('deitarTime')
+  const ds=document.getElementById('deitarSub')
+  const dd=document.getElementById('deitarDetail')
+  const dMin=S.deitarMin||'19:30', dMax=S.deitarMax||'20:00'
+  dd.textContent='janela: '+dMin+' – '+dMax
 
-  const dMin = S.deitarMin||'19:30'
-  const dMax = S.deitarMax||'20:00'
-  deitarDetail.textContent = `janela: ${dMin} – ${dMax}`
-
-  if (S.deitar) {
-    deitarTime.textContent=S.deitar
-    const dMs=horaToMs(S.deitar)
-    if (dMs) {
-      const diff=Math.round((dMs-now)/60000)
-      if (diff>60)      { deitarTime.className='card-value val-xl accent-sage'; deitarSub.textContent=`em ${fmtElapsed(diff*60)}`; deitarSub.style.color='var(--muted)' }
-      else if (diff>0)  { deitarTime.className='card-value val-xl accent-warn'; deitarSub.textContent=`⚡ em ${diff}min!`; deitarSub.style.color='var(--warn)' }
-      else              { deitarTime.className='card-value val-xl accent-blush'; deitarSub.textContent='🌙 hora de dormir!'; deitarSub.style.color='var(--blush)' }
+  if(S.deitar){
+    dt.textContent=S.deitar
+    const dms=horaToMs(S.deitar)
+    if(dms){
+      const diff=Math.round((dms-now)/60000)
+      if(diff>60){dt.className='card-value val-xl c-sage';ds.textContent='em '+fmtElapsed(diff*60);ds.style.color='var(--muted)'}
+      else if(diff>0){dt.className='card-value val-xl c-warn';ds.textContent='⚡ em '+diff+'min!';ds.style.color='var(--warn)'}
+      else{dt.className='card-value val-xl c-blush';ds.textContent='🌙 hora de dormir!';ds.style.color='var(--blush)'}
     }
   } else {
-    deitarTime.textContent=`${dMin}–${dMax}`
-    deitarTime.style.fontSize='clamp(24px,2.5vw,42px)'
-    deitarTime.className='card-value accent-sage'
-    deitarSub.textContent='janela alvo'
-    deitarSub.style.color='var(--muted)'
+    dt.textContent=dMin+'–'+dMax
+    dt.style.fontSize='clamp(22px,2.3vw,38px)'
+    dt.className='card-value c-sage'
+    ds.textContent='janela alvo'; ds.style.color='var(--muted)'
   }
 }
 
-// ── Sync status ────────────────────────────────
-function setSyncStatus(s) {
+function setSyncStatus(s){
   const el=document.getElementById('syncDot')
   el.className='sync-dot '+s
-  el.textContent = s==='ok'?'sincronizado':s==='err'?'erro de ligação':'a sincronizar…'
+  el.textContent=s==='ok'?'sincronizado':s==='err'?'erro de ligação':'a sincronizar…'
 }
 
-// ── Init ───────────────────────────────────────
-async function init() {
+async function init(){
   updateClock()
-  setInterval(updateClock, 1000)
-  setInterval(render, 1000)
-  await fetchData()
-  render()
-  setInterval(async () => { await fetchData(); render() }, 20000)
+  setInterval(updateClock,1000)
+  setInterval(render,1000)
+  await fetchData(); render()
+  setInterval(async()=>{await fetchData();render()},20000)
 }
-
 init()
 </script>
 </body>
