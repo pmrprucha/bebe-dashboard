@@ -173,7 +173,7 @@ async function q(table,params='') {
 function toMins(t){if(!t)return null;const[h,m]=t.split(':').map(Number);return h*60+m}
 function fromMins(m){if(m==null)return'–';m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')}
 function today(){return new Date().toISOString().slice(0,10)}
-function fmtElapsed(s){if(s<60)return s+'s';const m=Math.floor(s/60),h=Math.floor(m/60);return h===0?m+'min':h+'h'+(m%60>0?' '+(m%60)+'min':'')}
+function fmtElapsed(s){if(s<60)return'<1min';const m=Math.floor(s/60),h=Math.floor(m/60);return h===0?m+'min':h+'h'+(m%60>0?' '+(m%60)+'min':'')}
 function fmtTimer(s){const m=Math.floor(s/60),h=Math.floor(m/60),mm=String(m%60).padStart(2,'0'),ss=String(s%60).padStart(2,'0');return h===0?m+':'+ss:h+':'+mm+':'+ss}
 function horaToMs(hora){if(!hora)return null;const[h,m]=hora.split(':').map(Number);const d=new Date();d.setHours(h,m,0,0);return d.getTime()}
 
@@ -337,7 +337,7 @@ function render(){
     const refMs=horaToMs(S.acordou)
     if(refMs){
       const secs=Math.max(0,Math.floor((now-refMs)/1000))
-      etr.style.display='block'; etr.textContent=fmtElapsed(secs)
+      etr.style.display=secs<60?'none':'block'; etr.textContent=secs<60?'':fmtElapsed(secs)
       etr.className='estado-timer '+(gs==='alert'?'c-danger':gs==='warn'?'c-warn':'c-warn')
       if(S.nextSesta){
         const nms=horaToMs(S.nextSesta)
