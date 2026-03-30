@@ -19,7 +19,7 @@
     --blush: #e8906a;
   }
   * { box-sizing:border-box; margin:0; padding:0; }
-  html,body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:'Instrument Sans',sans-serif; overflow:hidden; transition:background 2s; }
+  html,body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:'Instrument Sans',sans-serif; overflow:hidden; transition:background 2s, filter 4s ease; }
 
   .bg-glow { position:fixed; inset:0; pointer-events:none; transition:background 3s; z-index:0; }
   body.state-ok       .bg-glow { background:radial-gradient(ellipse at 30% 50%,rgba(109,184,138,.08) 0%,transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(106,174,200,.05) 0%,transparent 50%); }
@@ -32,10 +32,10 @@
   .card { background:var(--surface); border:1px solid var(--border); border-radius:24px; padding:32px 36px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden; backdrop-filter:blur(20px); transition:background 2s,border-color 2s,box-shadow 2s; }
   .card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent); }
 
-  .card-label { font-size:clamp(13px,1vw,18px); font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); display:flex; align-items:center; gap:8px; }
+  .card-label { font-size:clamp(14px,1.1vw,19px); font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); display:flex; align-items:center; gap:8px; }
   .card-label .dot { width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.6; }
   .card-value { font-family:'Fraunces',serif; font-weight:200; line-height:1; color:var(--text); }
-  .card-sub { font-size:clamp(11px,.85vw,15px); color:var(--muted); margin-top:6px; font-weight:500; }
+  .card-sub { font-size:clamp(15px,1.1vw,20px); color:var(--muted); margin-top:6px; font-weight:500; }
 
   /* HORA */
   #card-hora { grid-row:1/3; align-items:center; text-align:center; }
@@ -85,8 +85,12 @@
   .sync-dot.syncing::before { background:var(--warn); animation:blink 1s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-  .ref-tipo   { font-size:clamp(12px,.9vw,16px); font-weight:600; letter-spacing:.5px; margin-top:6px; }
-  .ref-detalhe{ font-size:clamp(11px,.8vw,14px); color:var(--muted); margin-top:6px; line-height:1.4; max-height:3em; overflow:hidden; }
+  .ref-tipo   { font-size:clamp(15px,1.1vw,20px); font-weight:600; letter-spacing:.5px; margin-top:6px; }
+  .ref-detalhe{ font-size:clamp(13px,.9vw,17px); color:var(--muted); margin-top:6px; line-height:1.4; max-height:3em; overflow:hidden; }
+
+  body.dim { filter:brightness(0.18); }
+  .card { transition:background 2s,border-color 2s,box-shadow 2s,opacity 2s; }
+  body.state-sleeping .card:not(#card-estado):not(#card-hora) { opacity:0.35; }
 </style>
 </head>
 <body class="state-ok">
@@ -124,7 +128,10 @@
   <div class="card" id="card-ref">
     <div class="card-label"><div class="dot"></div>Última alimentação</div>
     <div>
-      <div class="card-value val-xl" id="refSince">–</div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div class="card-value val-xl" id="refSince">–</div>
+        <div id="refEmoji" style="font-size:clamp(38px,3.5vw,64px);line-height:1"></div>
+      </div>
       <div class="ref-tipo" id="refTipo"></div>
       <div class="ref-detalhe" id="refDetalhe"></div>
     </div>
@@ -137,7 +144,10 @@
       <div class="card-value val-xl c-sky" id="nextTime">–</div>
       <div class="card-sub" id="nextSub"></div>
     </div>
-    <div class="card-sub" id="nextDetail"></div>
+    <div>
+      <div class="card-sub" id="nextDetail"></div>
+      <div id="sestasSummary" style="font-size:clamp(13px,.9vw,17px);color:var(--muted);margin-top:8px;line-height:1.6"></div>
+    </div>
   </div>
 
   <div class="card" id="card-deitar">
@@ -192,6 +202,7 @@ let S = {
   acordou:null, dormiu:null, deitar:null, deitarMin:null, deitarMax:null,
   nextSesta:null, nextSestaNum:0,
   lastWakeMs:null, lastWakeHora:null, lastWakeFromNap:false,
+  sestasInfo:[], totalSleepMin:0,
   // última alimentação (amamentação ou refeição, o mais recente)
   lastMs:null, lastTipo:'', lastDetalhe:'', lastHora:''
 }
@@ -228,6 +239,15 @@ async function fetchData(){
       const ini=p[`s${n}_ini`],fim=p[`s${n}_fim`]
       if(ini&&!fim){S.sleeping=true;S.sleepStart=horaToMs(ini);break}
     }
+  }
+
+  // Info de todas as sestas + total dormido hoje
+  S.sestasInfo=[]; S.totalSleepMin=0
+  for(const n of[1,2,3]){
+    const ini=p[`s${n}_ini`],fim=p[`s${n}_fim`],alvo=p[`alvo${n}`]
+    const dur=ini&&fim?Math.max(0,toMins(fim)-toMins(ini)):null
+    S.sestasInfo.push({n,ini,fim,alvo,dur})
+    if(dur) S.totalSleepMin+=dur
   }
 
   // Última hora de acordar: manhã ou fim da sesta mais recente
@@ -308,6 +328,8 @@ function render(){
   const now=Date.now()
   const gs=getGlobalState()
   document.body.className='state-'+gs
+  const h=new Date().getHours()
+  if(S.sleepingNight||h>=22||h<6) document.body.classList.add('dim')
 
   // ── ESTADO ──────────────────────────────────
   const ec=document.getElementById('card-estado')
@@ -371,18 +393,26 @@ function render(){
   const rd  = document.getElementById('refDetalhe')
   const rh  = document.getElementById('refHora')
 
+  const re=document.getElementById('refEmoji')
   if(S.lastMs){
     const secs=Math.floor((now-S.lastMs)/1000)
     rs.textContent=fmtElapsed(secs)
     if(secs>10800){
       rs.className='card-value val-xl c-danger'
       rc.style.background='rgba(224,112,112,.07)'; rc.style.borderColor='rgba(224,112,112,.25)'
+      re.textContent='😟'
     } else if(secs>7200){
       rs.className='card-value val-xl c-warn'
       rc.style.background='rgba(232,184,75,.06)'; rc.style.borderColor='rgba(232,184,75,.2)'
+      re.textContent='😐'
+    } else if(secs>5400){
+      rs.className='card-value val-xl c-warn'
+      rc.style.background='rgba(232,184,75,.06)'; rc.style.borderColor='rgba(232,184,75,.2)'
+      re.textContent='🙂'
     } else {
       rs.className='card-value val-xl c-sage'
       rc.style.background='rgba(109,184,138,.06)'; rc.style.borderColor='rgba(109,184,138,.15)'
+      re.textContent='😄'
     }
     rt.textContent=S.lastTipo
     rt.style.color=secs>10800?'var(--danger)':secs>7200?'var(--warn)':'var(--sage)'
@@ -390,6 +420,7 @@ function render(){
     rh.textContent=S.lastHora?'às '+S.lastHora:''
   } else {
     rs.textContent='–'; rs.className='card-value val-xl'
+    re.textContent='🍼'
     rt.textContent=''; rd.textContent='Sem registos hoje'; rh.textContent=''
     rc.style.background=''; rc.style.borderColor=''
   }
@@ -414,12 +445,22 @@ function render(){
       if(diff>0){nt.className='card-value val-xl c-sky';ns.textContent='em '+fmtElapsed(diff*60);ns.style.color='var(--muted)'}
       else{nt.className='card-value val-xl c-warn';ns.textContent='🔔 É hora da sesta!';ns.style.color='var(--warn)'}
     }
-    nd.textContent=''
+    nd.textContent=S.totalSleepMin>0?'Dormido hoje: '+fmtElapsed(S.totalSleepMin*60):''
   } else {
-    nl.innerHTML='<div class="dot"></div>Próxima sesta'
+    nl.innerHTML='<div class="dot"></div>Sestas de hoje'
     nt.textContent='–'; nt.className='card-value val-xl'
-    ns.textContent='sem mais sestas previstas'; nd.textContent=''
+    ns.textContent=S.totalSleepMin>0?'Total: '+fmtElapsed(S.totalSleepMin*60):'sem sestas registadas'
+    nd.textContent=''
   }
+  // Resumo linha das 3 sestas
+  const ss=document.getElementById('sestasSummary')
+  const parts=S.sestasInfo.map(s=>{
+    if(s.ini&&s.fim) return s.n+'ª ✓ '+fmtElapsed(s.dur*60)
+    if(s.ini&&!s.fim) return s.n+'ª 😴 '+fmtElapsed(Math.floor((now-horaToMs(s.ini))/1000))
+    if(s.alvo&&s.alvo!=='–') return s.n+'ª ~'+s.alvo
+    return null
+  }).filter(Boolean)
+  ss.textContent=parts.join('  ·  ')
 
   // ── DEITAR ─────────────────────────────────────
   const dt=document.getElementById('deitarTime')
