@@ -337,7 +337,7 @@ function render(){
     const refMs=horaToMs(S.acordou)
     if(refMs){
       const secs=Math.max(0,Math.floor((now-refMs)/1000))
-      etr.style.display=secs<60?'none':'block'; etr.textContent=secs<60?'':fmtElapsed(secs)
+      etr.style.display=secs<60?'none':'block'; etr.textContent=secs<60?'':'há '+fmtElapsed(secs)
       etr.className='estado-timer '+(gs==='alert'?'c-danger':gs==='warn'?'c-warn':'c-warn')
       if(S.nextSesta){
         const nms=horaToMs(S.nextSesta)
