@@ -191,6 +191,7 @@ let S = {
   sleeping:false, sleepingNight:false, sleepStart:null,
   acordou:null, dormiu:null, deitar:null, deitarMin:null, deitarMax:null,
   nextSesta:null, nextSestaNum:0,
+  lastWakeMs:null, lastWakeHora:null, lastWakeFromNap:false,
   // última alimentação (amamentação ou refeição, o mais recente)
   lastMs:null, lastTipo:'', lastDetalhe:'', lastHora:''
 }
@@ -226,6 +227,15 @@ async function fetchData(){
     for(const n of[1,2,3]){
       const ini=p[`s${n}_ini`],fim=p[`s${n}_fim`]
       if(ini&&!fim){S.sleeping=true;S.sleepStart=horaToMs(ini);break}
+    }
+  }
+
+  // Última hora de acordar: manhã ou fim da sesta mais recente
+  S.lastWakeMs=horaToMs(S.acordou); S.lastWakeHora=S.acordou; S.lastWakeFromNap=false
+  if(!S.sleepingNight){
+    for(const n of[1,2,3]){
+      const fim=p[`s${n}_fim`]
+      if(fim){const ms=horaToMs(fim);if(ms&&(!S.lastWakeMs||ms>S.lastWakeMs)){S.lastWakeMs=ms;S.lastWakeHora=fim;S.lastWakeFromNap=true}}
     }
   }
 
@@ -334,7 +344,7 @@ function render(){
     if(gs==='alert'){const g=document.createElement('div');g.className='alert-glow';ec.appendChild(g)}
     ei.textContent='☀️'; et.textContent='Acordado'
     et.style.color=gs==='alert'?'var(--danger)':'var(--warn)'
-    const refMs=horaToMs(S.acordou)
+    const refMs=S.lastWakeMs
     if(refMs){
       const secs=Math.max(0,Math.floor((now-refMs)/1000))
       etr.style.display=secs<60?'none':'block'; etr.textContent=secs<60?'':'há '+fmtElapsed(secs)
@@ -348,7 +358,7 @@ function render(){
           pf.style.background=pct>90?'var(--danger)':pct>70?'var(--warn)':'var(--sage)'
           es.textContent=now>nms?'🔔 Hora da sesta!':Math.round(pct)+'% até à '+S.nextSestaNum+'ª sesta'
         }
-      } else { pt.style.display='none'; es.textContent=S.acordou?'Acordou às '+S.acordou:'' }
+      } else { pt.style.display='none'; es.textContent=S.lastWakeHora?'Acordou às '+S.lastWakeHora+(S.lastWakeFromNap?' (sesta)':''):'' }
     } else {
       etr.style.display='none'; es.textContent='Regista a hora de acordar na app'; pt.style.display='none'
     }
