@@ -19,7 +19,7 @@
     --blush: #e8906a;
   }
   * { box-sizing:border-box; margin:0; padding:0; }
-  html,body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:'Instrument Sans',sans-serif; overflow:hidden; transition:background 2s, filter 4s ease; }
+  html,body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:'Instrument Sans',sans-serif; overflow:hidden; transition:background 2s; }
 
   .bg-glow { position:fixed; inset:0; pointer-events:none; transition:background 3s; z-index:0; }
   body.state-ok       .bg-glow { background:radial-gradient(ellipse at 30% 50%,rgba(109,184,138,.08) 0%,transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(106,174,200,.05) 0%,transparent 50%); }
@@ -32,10 +32,10 @@
   .card { background:var(--surface); border:1px solid var(--border); border-radius:24px; padding:32px 36px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden; backdrop-filter:blur(20px); transition:background 2s,border-color 2s,box-shadow 2s; }
   .card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent); }
 
-  .card-label { font-size:clamp(14px,1.1vw,19px); font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); display:flex; align-items:center; gap:8px; }
+  .card-label { font-size:clamp(13px,1vw,18px); font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); display:flex; align-items:center; gap:8px; }
   .card-label .dot { width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.6; }
   .card-value { font-family:'Fraunces',serif; font-weight:200; line-height:1; color:var(--text); }
-  .card-sub { font-size:clamp(15px,1.1vw,20px); color:var(--muted); margin-top:6px; font-weight:500; }
+  .card-sub { font-size:clamp(11px,.85vw,15px); color:var(--muted); margin-top:6px; font-weight:500; }
 
   /* HORA */
   #card-hora { grid-row:1/3; align-items:center; text-align:center; }
@@ -43,7 +43,6 @@
   #card-hora .card-date  { font-family:'Fraunces',serif; font-size:clamp(16px,1.4vw,24px); font-style:italic; color:rgba(255,255,255,.35); margin-top:10px; }
   #card-hora .card-label { justify-content:center; }
 
-  
   /* ESTADO */
   #card-estado { grid-column:2; grid-row:1; }
   .estado-icon  { font-size:clamp(36px,3.5vw,64px); line-height:1; }
@@ -77,7 +76,8 @@
   .c-blush  { color:var(--blush); }
 
   .name-badge { position:fixed; top:18px; left:50%; transform:translateX(-50%); font-family:'Fraunces',serif; font-style:italic; font-size:clamp(13px,1.1vw,18px); color:rgba(255,255,255,.18); font-weight:300; letter-spacing:3px; z-index:10; pointer-events:none; }
-.action-banner {
+
+  .action-banner {
     position: fixed;
     top: 46px;
     left: 50%;
@@ -129,12 +129,8 @@
   .sync-dot.syncing::before { background:var(--warn); animation:blink 1s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-  .ref-tipo   { font-size:clamp(15px,1.1vw,20px); font-weight:600; letter-spacing:.5px; margin-top:6px; }
-  .ref-detalhe{ font-size:clamp(13px,.9vw,17px); color:var(--muted); margin-top:6px; line-height:1.4; max-height:3em; overflow:hidden; }
-
-  body.dim { filter:brightness(0.18); }
-  .card { transition:background 2s,border-color 2s,box-shadow 2s,opacity 2s; }
-  body.state-sleeping .card:not(#card-estado):not(#card-hora) { opacity:0.35; }
+  .ref-tipo   { font-size:clamp(12px,.9vw,16px); font-weight:600; letter-spacing:.5px; margin-top:6px; }
+  .ref-detalhe{ font-size:clamp(11px,.8vw,14px); color:var(--muted); margin-top:6px; line-height:1.4; max-height:3em; overflow:hidden; }
 </style>
 </head>
 <body class="state-ok">
@@ -145,6 +141,7 @@
   <div class="action-text" id="actionText">A calcular…</div>
   <div class="action-tag" id="actionTag">OK</div>
 </div>
+
 <div class="dashboard">
 
   <div class="card" id="card-hora">
@@ -176,10 +173,7 @@
   <div class="card" id="card-ref">
     <div class="card-label"><div class="dot"></div>Última alimentação</div>
     <div>
-      <div style="display:flex;align-items:center;gap:16px">
-        <div class="card-value val-xl" id="refSince">–</div>
-        <div id="refEmoji" style="font-size:clamp(38px,3.5vw,64px);line-height:1"></div>
-      </div>
+      <div class="card-value val-xl" id="refSince">–</div>
       <div class="ref-tipo" id="refTipo"></div>
       <div class="ref-detalhe" id="refDetalhe"></div>
     </div>
@@ -192,10 +186,7 @@
       <div class="card-value val-xl c-sky" id="nextTime">–</div>
       <div class="card-sub" id="nextSub"></div>
     </div>
-    <div>
-      <div class="card-sub" id="nextDetail"></div>
-      <div id="sestasSummary" style="font-size:clamp(13px,.9vw,17px);color:var(--muted);margin-top:8px;line-height:1.6"></div>
-    </div>
+    <div class="card-sub" id="nextDetail"></div>
   </div>
 
   <div class="card" id="card-deitar">
@@ -209,12 +200,13 @@
 
 </div>
 
-<div class="sync-dot" id="syncDot">sincronizado</div>
 <div class="day-summary" id="daySummary">
   <span>Sestas <b id="sumNaps">0</b></span>
   <span>Alimentações <b id="sumFeeds">0</b></span>
   <span>Sono dia <b id="sumSleep">0h00</b></span>
 </div>
+<div class="sync-dot" id="syncDot">sincronizado</div>
+
 <script>
 // ═══ CONFIG ════════════════════════════════════
 const SUPABASE_URL      = 'https://wkceuiexgauziaqyssag.supabase.co'
@@ -225,17 +217,20 @@ const CHILD_ID          = 'c2c0847c-6629-4160-bcb6-89b87adfe7c6'
 const H = { 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer '+SUPABASE_ANON_KEY }
 
 async function q(table,params='') {
+  const ctrl = new AbortController()
+  const timer = setTimeout(()=>ctrl.abort(),8000)
   try {
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`,{headers:H})
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`,{headers:H,signal:ctrl.signal})
     if(!r.ok) return null
     return await r.json()
   } catch { return null }
+  finally { clearTimeout(timer) }
 }
 
 function toMins(t){if(!t)return null;const[h,m]=t.split(':').map(Number);return h*60+m}
 function fromMins(m){if(m==null)return'–';m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')}
 function today(){return new Date().toISOString().slice(0,10)}
-function fmtElapsed(s){if(s<60)return'<1min';const m=Math.floor(s/60),h=Math.floor(m/60);return h===0?m+'min':h+'h'+(m%60>0?' '+(m%60)+'min':'')}
+function fmtElapsed(s){if(s<60)return s+'s';const m=Math.floor(s/60),h=Math.floor(m/60);return h===0?m+'min':h+'h'+(m%60>0?' '+(m%60)+'min':'')}
 function fmtTimer(s){const m=Math.floor(s/60),h=Math.floor(m/60),mm=String(m%60).padStart(2,'0'),ss=String(s%60).padStart(2,'0');return h===0?m+':'+ss:h+':'+mm+':'+ss}
 function horaToMs(hora){if(!hora)return null;const[h,m]=hora.split(':').map(Number);const d=new Date();d.setHours(h,m,0,0);return d.getTime()}
 
@@ -253,10 +248,7 @@ let S = {
   sleeping:false, sleepingNight:false, sleepStart:null,
   acordou:null, dormiu:null, deitar:null, deitarMin:null, deitarMax:null,
   nextSesta:null, nextSestaNum:0,
-  lastWakeMs:null, lastWakeHora:null, lastWakeFromNap:false,
-  sestasInfo:[], totalSleepMin:0,
   // última alimentação (amamentação ou refeição, o mais recente)
-  lastMs:null, lastTipo:'', lastDetalhe:'', lastHora:''
   lastMs:null, lastTipo:'', lastDetalhe:'', lastHora:'',
   napsDone:0, feedsToday:0, mealsToday:0, totalSleepMin:0, lastSyncAt:null
 }
@@ -264,18 +256,23 @@ let S = {
 async function fetchData(){
   setSyncStatus('syncing')
   const td=today()
-  const [kids,sleep,feeds,meals]=await Promise.all([
+  const [kids,sleepToday,feeds,meals]=await Promise.all([
     q('children',`id=eq.${CHILD_ID}&select=*`),
     q('sleep_events',`child_id=eq.${CHILD_ID}&data_date=eq.${td}&select=*`),
     q('feeds',`child_id=eq.${CHILD_ID}&data_date=eq.${td}&select=*&order=created_at.desc&limit=30`),
     q('meals',`child_id=eq.${CHILD_ID}&data_date=eq.${td}&select=*&order=hora.desc&limit=20`),
-    q('feeds',`child_id=eq.${CHILD_ID}&data_date=eq.${td}&select=*&order=created_at.desc&limit=5`),
-    q('meals',`child_id=eq.${CHILD_ID}&data_date=eq.${td}&select=*&order=hora.desc&limit=1`),
   ])
 
-  if(!sleep){setSyncStatus('err');return}
+  // fallback: se não existir registo de hoje, tentar o último disponível
+  let sleep = sleepToday
+  if(Array.isArray(sleepToday) && sleepToday.length===0){
+    const latestSleep = await q('sleep_events',`child_id=eq.${CHILD_ID}&select=*&order=data_date.desc&limit=1`)
+    if(Array.isArray(latestSleep) && latestSleep.length) sleep = latestSleep
+  }
+
+  if(!Array.isArray(sleep)){setSyncStatus('err');return}
+  S.lastSyncAt = new Date()
   setSyncStatus('ok')
-    S.lastSyncAt = new Date()
 
   const child=kids?.[0]||{}
   const p=sleep?.[0]?.payload||{}
@@ -285,6 +282,7 @@ async function fetchData(){
   S.acordou=p.acordou||null
   S.dormiu=p.dormiu||null
   S.deitar=p.deitar||null
+  S.napsDone=[1,2,3].filter(n=>!!p[`s${n}_fim`]).length
 
   // Sono nocturno: dormiu preenchido E acordou vazio
   S.sleepingNight = !!(S.dormiu && !S.acordou)
@@ -298,24 +296,6 @@ async function fetchData(){
     }
   }
 
-  // Info de todas as sestas + total dormido hoje
-  S.sestasInfo=[]; S.totalSleepMin=0
-  for(const n of[1,2,3]){
-    const ini=p[`s${n}_ini`],fim=p[`s${n}_fim`],alvo=p[`alvo${n}`]
-    const dur=ini&&fim?Math.max(0,toMins(fim)-toMins(ini)):null
-    S.sestasInfo.push({n,ini,fim,alvo,dur})
-    if(dur) S.totalSleepMin+=dur
-  }
-
-  // Última hora de acordar: manhã ou fim da sesta mais recente
-  S.lastWakeMs=horaToMs(S.acordou); S.lastWakeHora=S.acordou; S.lastWakeFromNap=false
-  if(!S.sleepingNight){
-    for(const n of[1,2,3]){
-      const fim=p[`s${n}_fim`]
-      if(fim){const ms=horaToMs(fim);if(ms&&(!S.lastWakeMs||ms>S.lastWakeMs)){S.lastWakeMs=ms;S.lastWakeHora=fim;S.lastWakeFromNap=true}}
-    }
-  }
-
   // Próxima sesta
   S.nextSesta=null;S.nextSestaNum=0
   const alvos=[p.alvo1,p.alvo2,p.alvo3]
@@ -326,7 +306,7 @@ async function fetchData(){
 
   // ── Última alimentação: amamentação OU refeição, o mais recente ──
   let candidates = []
- S.feedsToday = feeds?.length || 0
+  S.feedsToday = feeds?.length || 0
   S.mealsToday = meals?.length || 0
 
   // Amamentação — terminou em created_at + duracao_seg
@@ -365,7 +345,7 @@ async function fetchData(){
   } else {
     S.lastMs=null; S.lastTipo=''; S.lastDetalhe=''; S.lastHora=''
   }
-  
+
   // Sono total do dia (sestas concluídas)
   S.totalSleepMin = 0
   for(const n of [1,2,3]){
@@ -401,10 +381,8 @@ function render(){
   const now=Date.now()
   const gs=getGlobalState()
   document.body.className='state-'+gs
-    renderAction(now,gs)
+  renderAction(now,gs)
   renderSummary()
-  const h=new Date().getHours()
-  if(S.sleepingNight||h>=22||h<6) document.body.classList.add('dim')
 
   // ── ESTADO ──────────────────────────────────
   const ec=document.getElementById('card-estado')
@@ -441,10 +419,10 @@ function render(){
     if(gs==='alert'){const g=document.createElement('div');g.className='alert-glow';ec.appendChild(g)}
     ei.textContent='☀️'; et.textContent='Acordado'
     et.style.color=gs==='alert'?'var(--danger)':'var(--warn)'
-    const refMs=S.lastWakeMs
+    const refMs=horaToMs(S.acordou)
     if(refMs){
       const secs=Math.max(0,Math.floor((now-refMs)/1000))
-      etr.style.display=secs<60?'none':'block'; etr.textContent=secs<60?'':'há '+fmtElapsed(secs)
+      etr.style.display='block'; etr.textContent=fmtElapsed(secs)
       etr.className='estado-timer '+(gs==='alert'?'c-danger':gs==='warn'?'c-warn':'c-warn')
       if(S.nextSesta){
         const nms=horaToMs(S.nextSesta)
@@ -455,7 +433,7 @@ function render(){
           pf.style.background=pct>90?'var(--danger)':pct>70?'var(--warn)':'var(--sage)'
           es.textContent=now>nms?'🔔 Hora da sesta!':Math.round(pct)+'% até à '+S.nextSestaNum+'ª sesta'
         }
-      } else { pt.style.display='none'; es.textContent=S.lastWakeHora?'Acordou às '+S.lastWakeHora+(S.lastWakeFromNap?' (sesta)':''):'' }
+      } else { pt.style.display='none'; es.textContent=S.acordou?'Acordou às '+S.acordou:'' }
     } else {
       etr.style.display='none'; es.textContent='Regista a hora de acordar na app'; pt.style.display='none'
     }
@@ -468,26 +446,18 @@ function render(){
   const rd  = document.getElementById('refDetalhe')
   const rh  = document.getElementById('refHora')
 
-  const re=document.getElementById('refEmoji')
   if(S.lastMs){
     const secs=Math.floor((now-S.lastMs)/1000)
     rs.textContent=fmtElapsed(secs)
     if(secs>10800){
       rs.className='card-value val-xl c-danger'
       rc.style.background='rgba(224,112,112,.07)'; rc.style.borderColor='rgba(224,112,112,.25)'
-      re.textContent='😟'
     } else if(secs>7200){
       rs.className='card-value val-xl c-warn'
       rc.style.background='rgba(232,184,75,.06)'; rc.style.borderColor='rgba(232,184,75,.2)'
-      re.textContent='😐'
-    } else if(secs>5400){
-      rs.className='card-value val-xl c-warn'
-      rc.style.background='rgba(232,184,75,.06)'; rc.style.borderColor='rgba(232,184,75,.2)'
-      re.textContent='🙂'
     } else {
       rs.className='card-value val-xl c-sage'
       rc.style.background='rgba(109,184,138,.06)'; rc.style.borderColor='rgba(109,184,138,.15)'
-      re.textContent='😄'
     }
     rt.textContent=S.lastTipo
     rt.style.color=secs>10800?'var(--danger)':secs>7200?'var(--warn)':'var(--sage)'
@@ -495,7 +465,6 @@ function render(){
     rh.textContent=S.lastHora?'às '+S.lastHora:''
   } else {
     rs.textContent='–'; rs.className='card-value val-xl'
-    re.textContent='🍼'
     rt.textContent=''; rd.textContent='Sem registos hoje'; rh.textContent=''
     rc.style.background=''; rc.style.borderColor=''
   }
@@ -520,22 +489,12 @@ function render(){
       if(diff>0){nt.className='card-value val-xl c-sky';ns.textContent='em '+fmtElapsed(diff*60);ns.style.color='var(--muted)'}
       else{nt.className='card-value val-xl c-warn';ns.textContent='🔔 É hora da sesta!';ns.style.color='var(--warn)'}
     }
-    nd.textContent=S.totalSleepMin>0?'Dormido hoje: '+fmtElapsed(S.totalSleepMin*60):''
-  } else {
-    nl.innerHTML='<div class="dot"></div>Sestas de hoje'
-    nt.textContent='–'; nt.className='card-value val-xl'
-    ns.textContent=S.totalSleepMin>0?'Total: '+fmtElapsed(S.totalSleepMin*60):'sem sestas registadas'
     nd.textContent=''
+  } else {
+    nl.innerHTML='<div class="dot"></div>Próxima sesta'
+    nt.textContent='–'; nt.className='card-value val-xl'
+    ns.textContent='sem mais sestas previstas'; nd.textContent=''
   }
-  // Resumo linha das 3 sestas
-  const ss=document.getElementById('sestasSummary')
-  const parts=S.sestasInfo.map(s=>{
-    if(s.ini&&s.fim) return s.n+'ª ✓ '+fmtElapsed(s.dur*60)
-    if(s.ini&&!s.fim) return s.n+'ª 😴 '+fmtElapsed(Math.floor((now-horaToMs(s.ini))/1000))
-    if(s.alvo&&s.alvo!=='–') return s.n+'ª ~'+s.alvo
-    return null
-  }).filter(Boolean)
-  ss.textContent=parts.join('  ·  ')
 
   // ── DEITAR ─────────────────────────────────────
   const dt=document.getElementById('deitarTime')
@@ -564,7 +523,7 @@ function render(){
 function setSyncStatus(s){
   const el=document.getElementById('syncDot')
   el.className='sync-dot '+s
-    if(s==='ok'){
+  if(s==='ok'){
     const hh = S.lastSyncAt ? String(S.lastSyncAt.getHours()).padStart(2,'0')+':'+String(S.lastSyncAt.getMinutes()).padStart(2,'0') : '--:--'
     el.textContent='sincronizado '+hh
     return
@@ -635,7 +594,6 @@ function renderSummary(){
   document.getElementById('sumFeeds').textContent=String((S.feedsToday||0)+(S.mealsToday||0))
   const h=Math.floor((S.totalSleepMin||0)/60),m=String((S.totalSleepMin||0)%60).padStart(2,'0')
   document.getElementById('sumSleep').textContent=h+'h'+m
-  el.textContent=s==='ok'?'sincronizado':s==='err'?'erro de ligação':'a sincronizar…'
 }
 
 async function init(){
