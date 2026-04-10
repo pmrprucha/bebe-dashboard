@@ -1,1 +1,579 @@
-undefined
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Martim &mdash; Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,200;0,300;0,400;1,200;1,300&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e14;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.07);
+    --text: #e8edf5;
+    --muted: rgba(255,255,255,0.35);
+    --sage: #6db88a;
+    --sky: #6aaec8;
+    --warn: #e8b84b;
+    --danger: #e07070;
+    --blush: #e8906a;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:'Instrument Sans',sans-serif; overflow:hidden; }
+
+  .bg-glow { position:fixed; inset:0; pointer-events:none; transition:background 3s; z-index:0; }
+  body.state-ok       .bg-glow { background:radial-gradient(ellipse at 30% 50%,rgba(109,184,138,.08) 0%,transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(106,174,200,.05) 0%,transparent 50%); }
+  body.state-sleeping .bg-glow { background:radial-gradient(ellipse at 50% 40%,rgba(106,174,200,.12) 0%,transparent 60%); }
+  body.state-warn     .bg-glow { background:radial-gradient(ellipse at 50% 30%,rgba(232,184,75,.1) 0%,transparent 55%); }
+  body.state-alert    .bg-glow { background:radial-gradient(ellipse at 50% 30%,rgba(224,112,112,.12) 0%,transparent 55%); }
+
+  .dashboard {
+    width:100vw; height:100vh;
+    display:grid;
+    grid-template-columns: 1fr 1.4fr 1fr;
+    grid-template-rows: 1fr 1fr 0.6fr;
+    gap:18px; padding:28px;
+    position:relative; z-index:1;
+  }
+
+  .card {
+    background:var(--surface); border:1px solid var(--border); border-radius:22px;
+    padding:28px 32px; display:flex; flex-direction:column; justify-content:space-between;
+    position:relative; overflow:hidden; backdrop-filter:blur(20px);
+    transition:background 2s,border-color 2s;
+  }
+  .card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent); }
+
+  .card-label { font-size:clamp(12px,.95vw,17px); font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); display:flex; align-items:center; gap:8px; }
+  .card-label .dot { width:6px; height:6px; border-radius:50%; background:currentColor; opacity:.6; }
+  .card-value { font-family:'Fraunces',serif; font-weight:200; line-height:1; color:var(--text); }
+  .card-sub { font-size:clamp(11px,.8vw,14px); color:var(--muted); margin-top:6px; font-weight:500; }
+
+  /* HORA */
+  #card-hora { grid-column:1; grid-row:1/4; align-items:center; text-align:center; }
+  #card-hora .card-value { font-size:clamp(70px,7.5vw,130px); letter-spacing:-4px; color:#fff; }
+  #card-hora .card-date  { font-family:'Fraunces',serif; font-size:clamp(14px,1.3vw,22px); font-style:italic; color:rgba(255,255,255,.35); margin-top:10px; }
+  #card-hora .card-label { justify-content:center; }
+
+  /* ESTADO */
+  #card-estado { grid-column:2; grid-row:1; }
+  .estado-icon  { font-size:clamp(32px,3.2vw,58px); line-height:1; }
+  .estado-text  { font-family:'Fraunces',serif; font-size:clamp(24px,2.6vw,46px); font-weight:300; }
+  .estado-timer { font-family:'Fraunces',serif; font-size:clamp(40px,4.4vw,78px); font-weight:200; letter-spacing:-2px; line-height:1; }
+
+  /* ALIMENTACAO */
+  #card-ref { grid-column:3; grid-row:1; transition:background 2s,border-color 2s; }
+
+  /* PROXIMA SESTA */
+  #card-next { grid-column:2; grid-row:2; }
+
+  /* DEITAR */
+  #card-deitar { grid-column:3; grid-row:2; }
+
+  /* TRATAMENTOS */
+  #card-treat { grid-column:2/4; grid-row:3; }
+  .treat-item {
+    display:inline-flex; flex-direction:column; gap:3px;
+    padding:8px 16px; border-radius:12px;
+  }
+  .treat-name { font-family:'Fraunces',serif; font-size:clamp(14px,1.3vw,24px); font-weight:300; color:var(--text); }
+  .treat-status { font-size:clamp(10px,.8vw,14px); font-weight:600; }
+
+  @keyframes sleepPulse { 0%,100%{opacity:.12;transform:scale(1)} 50%{opacity:.22;transform:scale(1.04)} }
+  .sleep-glow { position:absolute; inset:0; border-radius:22px; background:radial-gradient(ellipse at 50% 50%,rgba(106,174,200,.2),transparent 70%); animation:sleepPulse 4s ease-in-out infinite; pointer-events:none; }
+  @keyframes alertPulse { 0%,100%{opacity:.1} 50%{opacity:.2} }
+  .alert-glow { position:absolute; inset:0; border-radius:22px; background:radial-gradient(ellipse at 50% 30%,rgba(224,112,112,.25),transparent 60%); animation:alertPulse 2s ease-in-out infinite; pointer-events:none; }
+
+  .progress-track { width:100%; height:4px; background:rgba(255,255,255,.06); border-radius:2px; overflow:hidden; margin-top:12px; }
+  .progress-fill  { height:100%; border-radius:2px; transition:width 1s linear; }
+
+  .val-xl { font-size:clamp(42px,4.5vw,82px); }
+
+  .c-sage   { color:var(--sage); }
+  .c-sky    { color:var(--sky); }
+  .c-warn   { color:var(--warn); }
+  .c-danger { color:var(--danger); }
+  .c-blush  { color:var(--blush); }
+
+  .name-badge { position:fixed; top:16px; left:50%; transform:translateX(-50%); font-family:'Fraunces',serif; font-style:italic; font-size:clamp(12px,1vw,17px); color:rgba(255,255,255,.18); font-weight:300; letter-spacing:3px; z-index:10; pointer-events:none; }
+
+  .sync-dot { position:fixed; bottom:16px; right:22px; display:flex; align-items:center; gap:7px; font-size:11px; color:rgba(255,255,255,.18); font-weight:500; z-index:10; }
+  .sync-dot::before { content:''; width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.2); display:block; }
+  .sync-dot.ok::before      { background:var(--sage); }
+  .sync-dot.err::before     { background:var(--danger); }
+  .sync-dot.syncing::before { background:var(--warn); animation:blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+</style>
+</head>
+<body class="state-ok">
+<div class="bg-glow"></div>
+<div class="name-badge">&#127807; martim</div>
+
+<div class="dashboard">
+
+  <!-- HORA -->
+  <div class="card" id="card-hora">
+    <div class="card-label"><div class="dot"></div>Hora</div>
+    <div>
+      <div class="card-value" id="clockTime">--:--</div>
+      <div class="card-date" id="clockDate"></div>
+    </div>
+    <div style="height:1px"></div>
+  </div>
+
+  <!-- ESTADO -->
+  <div class="card" id="card-estado">
+    <div class="card-label" id="estadoLabel"><div class="dot"></div>Estado</div>
+    <div style="display:flex;align-items:center;gap:18px;">
+      <div class="estado-icon" id="estadoIcon">&#8987;</div>
+      <div>
+        <div class="estado-text" id="estadoText">A carregar...</div>
+        <div class="estado-timer" id="estadoTimer" style="display:none"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card-sub" id="estadoSub"></div>
+      <div class="progress-track" id="progressTrack" style="display:none">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ULTIMA ALIMENTACAO -->
+  <div class="card" id="card-ref">
+    <div class="card-label"><div class="dot"></div>&#128336; Ultima alimentacao</div>
+    <div>
+      <div class="card-value val-xl" id="refSince">&#8211;</div>
+      <div style="font-size:clamp(12px,.9vw,16px);font-weight:600;margin-top:6px;" id="refTipo"></div>
+      <div class="card-sub" id="refDetalhe" style="margin-top:6px;line-height:1.4;max-height:3em;overflow:hidden;"></div>
+    </div>
+    <div class="card-sub" id="refHora"></div>
+  </div>
+
+  <!-- PROXIMA SESTA -->
+  <div class="card" id="card-next">
+    <div class="card-label" id="nextLabel"><div class="dot"></div>Proxima sesta</div>
+    <div>
+      <div class="card-value val-xl c-sky" id="nextTime">&#8211;</div>
+      <div class="card-sub" id="nextSub"></div>
+    </div>
+    <div class="card-sub" id="nextDetail"></div>
+  </div>
+
+  <!-- DEITAR -->
+  <div class="card" id="card-deitar">
+    <div class="card-label"><div class="dot"></div>Hora de deitar</div>
+    <div>
+      <div class="card-value val-xl c-sage" id="deitarTime">&#8211;</div>
+      <div class="card-sub" id="deitarSub"></div>
+    </div>
+    <div class="card-sub" id="deitarDetail"></div>
+  </div>
+
+  <!-- TRATAMENTOS -->
+  <div class="card" id="card-treat">
+    <div class="card-label" id="treatLabel"><div class="dot" id="treatDot"></div>Tratamentos</div>
+    <div id="treatContent" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px;">
+      <span style="color:var(--muted);font-size:clamp(11px,.85vw,15px)">A carregar...</span>
+    </div>
+  </div>
+
+</div>
+
+<div class="sync-dot" id="syncDot">sincronizado</div>
+
+<script>
+// ===================================================
+// CONFIG
+// ===================================================
+var SUPABASE_URL      = 'COLOCA_AQUI_O_SUPABASE_URL'
+var SUPABASE_ANON_KEY = 'COLOCA_AQUI_O_ANON_KEY'
+var CHILD_ID          = 'COLOCA_AQUI_O_ID_DO_MARTIM'
+
+var H = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
+
+function q(table, params) {
+  params = params || ''
+  return fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + params, { headers: H })
+    .then(function(r) { if (!r.ok) return null; return r.json() })
+    .catch(function() { return null })
+}
+
+// ===================================================
+// UTILS
+// ===================================================
+function toMins(t) { if (!t) return null; var p=t.split(':').map(Number); return p[0]*60+p[1] }
+function fromMins(m) { if (m==null) return '--'; m=((m%1440)+1440)%1440; return ('0'+Math.floor(m/60)).slice(-2)+':'+('0'+(m%60)).slice(-2) }
+function today() { return new Date().toISOString().slice(0,10) }
+function horaToMs(hora) { if (!hora) return null; var p=hora.split(':').map(Number),d=new Date(); d.setHours(p[0],p[1],0,0); return d.getTime() }
+
+function fmtElapsed(s) {
+  if (s < 60) return '<1min'
+  var m=Math.floor(s/60), h=Math.floor(m/60)
+  return h===0 ? m+'min' : h+'h'+(m%60>0?' '+m%60+'min':'')
+}
+function fmtTimer(s) {
+  var m=Math.floor(s/60), h=Math.floor(m/60)
+  var mm=('0'+(m%60)).slice(-2), ss=('0'+(s%60)).slice(-2)
+  return h===0 ? m+':'+ss : h+':'+mm+':'+ss
+}
+
+// ===================================================
+// CLOCK
+// ===================================================
+function updateClock() {
+  var n=new Date()
+  document.getElementById('clockTime').textContent = ('0'+n.getHours()).slice(-2)+':'+('0'+n.getMinutes()).slice(-2)
+  var days=['Domingo','Segunda','Terca','Quarta','Quinta','Sexta','Sabado']
+  var months=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
+  document.getElementById('clockDate').textContent = days[n.getDay()]+', '+n.getDate()+' '+months[n.getMonth()]
+}
+
+// ===================================================
+// STATE
+// ===================================================
+var S = {
+  sleeping:false, sleepingNight:false, sleepStart:null,
+  acordou:null, dormiu:null, deitar:null, deitarMin:null, deitarMax:null,
+  nextSesta:null, nextSestaNum:0,
+  lastMs:null, lastTipo:'', lastDetalhe:'', lastHora:''
+}
+
+// ===================================================
+// FETCH SLEEP + FEEDS + MEALS
+// ===================================================
+function fetchData() {
+  setSyncStatus('syncing')
+  var td = today()
+  return Promise.all([
+    q('children', 'id=eq.'+CHILD_ID+'&select=*'),
+    q('sleep_events', 'child_id=eq.'+CHILD_ID+'&data_date=eq.'+td+'&select=*'),
+    q('feeds', 'child_id=eq.'+CHILD_ID+'&data_date=eq.'+td+'&select=*&order=created_at.desc&limit=5'),
+    q('meals', 'child_id=eq.'+CHILD_ID+'&data_date=eq.'+td+'&select=*&order=hora.desc&limit=1')
+  ]).then(function(results) {
+    var kids=results[0], sleep=results[1], feeds=results[2], meals=results[3]
+    if (!sleep) { setSyncStatus('err'); return }
+    setSyncStatus('ok')
+
+    var child = kids && kids[0] ? kids[0] : {}
+    var p = sleep && sleep[0] && sleep[0].payload ? sleep[0].payload : {}
+
+    S.deitarMin = child.deitar_min || '19:30'
+    S.deitarMax = child.deitar_max || '20:00'
+    S.acordou   = p.acordou || null
+    S.dormiu    = p.dormiu  || null
+    S.deitar    = p.deitar  || null
+
+    S.sleepingNight = !!(S.dormiu && !S.acordou)
+    S.sleeping = false; S.sleepStart = null
+
+    if (!S.sleepingNight) {
+      for (var n=1; n<=3; n++) {
+        if (p['s'+n+'_ini'] && !p['s'+n+'_fim']) {
+          S.sleeping = true; S.sleepStart = horaToMs(p['s'+n+'_ini']); break
+        }
+      }
+    }
+
+    S.nextSesta = null; S.nextSestaNum = 0
+    var alvos = [p.alvo1, p.alvo2, p.alvo3]
+    for (var i=0; i<3; i++) {
+      if (!p['s'+(i+1)+'_ini'] && alvos[i] && alvos[i] !== '--') {
+        S.nextSesta = alvos[i]; S.nextSestaNum = i+1; break
+      }
+    }
+
+    var candidates = []
+    if (feeds && feeds.length) {
+      var f = feeds[0]
+      var endMs = f.created_at ? new Date(f.created_at).getTime()+(f.duracao_seg||0)*1000 : horaToMs(f.hora)
+      if (endMs) candidates.push({ ms:endMs, tipo:'Amamentacao', detalhe:f.lado||'', hora:f.hora })
+    }
+    if (meals && meals.length) {
+      var mealMs = horaToMs(meals[0].hora)
+      if (mealMs) candidates.push({ ms:mealMs, tipo:'Refeicao', detalhe:meals[0].obs||meals[0].descricao||'', hora:meals[0].hora })
+    }
+    if (candidates.length) {
+      var best = candidates.reduce(function(a,b){ return a.ms>b.ms?a:b })
+      S.lastMs=best.ms; S.lastTipo=best.tipo; S.lastDetalhe=best.detalhe; S.lastHora=best.hora
+    } else {
+      S.lastMs=null; S.lastTipo=''; S.lastDetalhe=''; S.lastHora=''
+    }
+  })
+}
+
+// ===================================================
+// FETCH TREATMENTS
+// ===================================================
+function fetchTreatments() {
+  return Promise.all([
+    q('treatments', 'child_id=eq.'+CHILD_ID+'&ativo=eq.true&select=*'),
+  ]).then(function(results) {
+    var treats = results[0]
+    if (!treats || !treats.length) { window._treats=[]; window._treatLogs={}; return }
+    var ids = treats.map(function(t){ return t.id }).join(',')
+    return q('treatment_logs', 'treatment_id=in.('+ids+')&select=*&order=tomado_em.desc')
+      .then(function(logs) {
+        var byT = {}
+        for (var i=0; i<(logs||[]).length; i++) {
+          var l = logs[i]
+          if (!byT[l.treatment_id]) byT[l.treatment_id] = l.tomado_em
+        }
+        window._treats = treats
+        window._treatLogs = byT
+      })
+  })
+}
+
+// ===================================================
+// GLOBAL STATE
+// ===================================================
+function getGlobalState() {
+  var now = Date.now()
+  if (S.sleeping || S.sleepingNight) return 'sleeping'
+  if (S.lastMs) {
+    var s = Math.floor((now-S.lastMs)/1000)
+    if (s > 10800) return 'alert'
+    if (s > 7200)  return 'warn'
+  }
+  if (S.nextSesta) {
+    var ms = horaToMs(S.nextSesta)
+    if (ms && now > ms+45*60*1000) return 'alert'
+    if (ms && now > ms+15*60*1000) return 'warn'
+  }
+  return 'ok'
+}
+
+// ===================================================
+// RENDER SLEEP / ESTADO
+// ===================================================
+function render() {
+  var now = Date.now()
+  var gs = getGlobalState()
+  document.body.className = 'state-'+gs
+
+  var ec  = document.getElementById('card-estado')
+  var ei  = document.getElementById('estadoIcon')
+  var et  = document.getElementById('estadoText')
+  var etr = document.getElementById('estadoTimer')
+  var es  = document.getElementById('estadoSub')
+  var pt  = document.getElementById('progressTrack')
+  var pf  = document.getElementById('progressFill')
+
+  ec.querySelectorAll('.sleep-glow,.alert-glow').forEach(function(e){ e.remove() })
+
+  if (S.sleepingNight) {
+    ec.style.background='rgba(20,30,50,.4)'; ec.style.borderColor='rgba(106,174,200,.2)'
+    var g=document.createElement('div'); g.className='sleep-glow'; ec.appendChild(g)
+    ei.textContent='\uD83C\uDF19'; et.textContent='A dormir (noite)'; et.style.color='var(--sky)'
+    etr.style.display='block'; etr.className='estado-timer c-sky'
+    var refMs=horaToMs(S.dormiu)
+    etr.textContent=refMs?fmtTimer(Math.floor((now-refMs)/1000)):'--'
+    es.textContent=S.dormiu?'Desde as '+S.dormiu:''; pt.style.display='none'
+
+  } else if (S.sleeping && S.sleepStart) {
+    ec.style.background='rgba(106,174,200,.07)'; ec.style.borderColor='rgba(106,174,200,.2)'
+    var g2=document.createElement('div'); g2.className='sleep-glow'; ec.appendChild(g2)
+    ei.textContent='\uD83D\uDE34'; et.textContent='A dormir (sesta)'; et.style.color='var(--sky)'
+    etr.style.display='block'; etr.className='estado-timer c-sky'
+    etr.textContent=fmtTimer(Math.floor((now-S.sleepStart)/1000))
+    var sh=new Date(S.sleepStart)
+    es.textContent='Comecou as '+('0'+sh.getHours()).slice(-2)+':'+('0'+sh.getMinutes()).slice(-2)
+    pt.style.display='none'
+
+  } else {
+    ec.style.background=gs==='alert'?'rgba(224,112,112,.06)':gs==='warn'?'rgba(232,184,75,.05)':'rgba(255,255,255,.03)'
+    ec.style.borderColor=gs==='alert'?'rgba(224,112,112,.25)':gs==='warn'?'rgba(232,184,75,.2)':'var(--border)'
+    if (gs==='alert'){ var g3=document.createElement('div'); g3.className='alert-glow'; ec.appendChild(g3) }
+    ei.textContent='\u2600\uFE0F'; et.textContent='Acordado'
+    et.style.color=gs==='alert'?'var(--danger)':'var(--warn)'
+    var refMs2=horaToMs(S.acordou)
+    if (refMs2) {
+      var secs=Math.max(0,Math.floor((now-refMs2)/1000))
+      etr.style.display=secs<60?'none':'block'
+      etr.textContent=secs<60?'':'ha '+fmtElapsed(secs)
+      etr.className='estado-timer '+(gs==='alert'?'c-danger':'c-warn')
+      if (S.nextSesta) {
+        var nms=horaToMs(S.nextSesta)
+        if (nms) {
+          var pct=Math.min(100,Math.max(0,(now-refMs2)/(nms-refMs2)*100))
+          pt.style.display='block'
+          pf.style.width=pct+'%'
+          pf.style.background=pct>90?'var(--danger)':pct>70?'var(--warn)':'var(--sage)'
+          es.textContent=now>nms?'\uD83D\uDD14 Hora da sesta!':Math.round(pct)+'% ate a '+S.nextSestaNum+'a sesta'
+        }
+      } else { pt.style.display='none'; es.textContent=S.acordou?'Acordou as '+S.acordou:'' }
+    } else {
+      etr.style.display='none'; es.textContent='Regista a hora de acordar na app'; pt.style.display='none'
+    }
+  }
+
+  // ULTIMA ALIMENTACAO
+  var rc=document.getElementById('card-ref')
+  var rs=document.getElementById('refSince')
+  var rt=document.getElementById('refTipo')
+  var rd=document.getElementById('refDetalhe')
+  var rh=document.getElementById('refHora')
+
+  if (S.lastMs) {
+    var secs2=Math.floor((now-S.lastMs)/1000)
+    rs.textContent='ha '+fmtElapsed(secs2)
+    if (secs2>10800){ rs.className='card-value val-xl c-danger'; rc.style.background='rgba(224,112,112,.07)'; rc.style.borderColor='rgba(224,112,112,.25)' }
+    else if (secs2>7200){ rs.className='card-value val-xl c-warn'; rc.style.background='rgba(232,184,75,.06)'; rc.style.borderColor='rgba(232,184,75,.2)' }
+    else { rs.className='card-value val-xl c-sage'; rc.style.background='rgba(109,184,138,.06)'; rc.style.borderColor='rgba(109,184,138,.15)' }
+    rt.textContent=S.lastTipo
+    rt.style.color=secs2>10800?'var(--danger)':secs2>7200?'var(--warn)':'var(--sage)'
+    rd.textContent=S.lastDetalhe||''
+    rh.textContent=S.lastHora?'as '+S.lastHora:''
+  } else {
+    rs.textContent='--'; rs.className='card-value val-xl'
+    rt.textContent=''; rd.textContent='Sem registos hoje'; rh.textContent=''
+    rc.style.background=''; rc.style.borderColor=''
+  }
+
+  // PROXIMA SESTA
+  var nl=document.getElementById('nextLabel')
+  var nt=document.getElementById('nextTime')
+  var ns=document.getElementById('nextSub')
+  var nd=document.getElementById('nextDetail')
+
+  if (S.sleeping) {
+    nl.innerHTML='<div class="dot" style="background:var(--sky)"></div>Sesta atual'
+    nt.textContent='\uD83D\uDE34'; nt.className='card-value val-xl c-sky'
+    var dur=S.sleepStart?Math.floor((now-S.sleepStart)/60000):0
+    ns.textContent=dur+'min'; nd.textContent=''
+  } else if (S.nextSesta) {
+    nl.innerHTML='<div class="dot" style="background:var(--sky)"></div>'+S.nextSestaNum+'a Sesta'
+    nt.textContent=S.nextSesta
+    var nms2=horaToMs(S.nextSesta)
+    if (nms2) {
+      var diff=Math.round((nms2-now)/60000)
+      if (diff>0){ nt.className='card-value val-xl c-sky'; ns.textContent='em '+fmtElapsed(diff*60); ns.style.color='var(--muted)' }
+      else{ nt.className='card-value val-xl c-warn'; ns.textContent='\uD83D\uDD14 E hora da sesta!'; ns.style.color='var(--warn)' }
+    }
+    nd.textContent=''
+  } else {
+    nl.innerHTML='<div class="dot"></div>Proxima sesta'
+    nt.textContent='--'; nt.className='card-value val-xl'
+    ns.textContent='sem mais sestas previstas'; nd.textContent=''
+  }
+
+  // DEITAR
+  var dt=document.getElementById('deitarTime')
+  var ds=document.getElementById('deitarSub')
+  var dd=document.getElementById('deitarDetail')
+  var dMin=S.deitarMin||'19:30', dMax=S.deitarMax||'20:00'
+  dd.textContent='janela: '+dMin+' - '+dMax
+
+  if (S.deitar) {
+    dt.textContent=S.deitar
+    var dms=horaToMs(S.deitar)
+    if (dms) {
+      var ddiff=Math.round((dms-now)/60000)
+      if (ddiff>60){ dt.className='card-value val-xl c-sage'; ds.textContent='em '+fmtElapsed(ddiff*60); ds.style.color='var(--muted)' }
+      else if (ddiff>0){ dt.className='card-value val-xl c-warn'; ds.textContent='em '+ddiff+'min!'; ds.style.color='var(--warn)' }
+      else{ dt.className='card-value val-xl c-blush'; ds.textContent='\uD83C\uDF19 hora de dormir!'; ds.style.color='var(--blush)' }
+    }
+  } else {
+    dt.textContent=dMin+'-'+dMax
+    dt.style.fontSize='clamp(20px,2.1vw,36px)'
+    dt.className='card-value c-sage'
+    ds.textContent='janela alvo'; ds.style.color='var(--muted)'
+  }
+}
+
+// ===================================================
+// RENDER TREATMENTS
+// ===================================================
+function renderTreatments() {
+  var treats = window._treats || []
+  var logs   = window._treatLogs || {}
+  var content = document.getElementById('treatContent')
+  var dot     = document.getElementById('treatDot')
+  var card    = document.getElementById('card-treat')
+  if (!content) return
+
+  var now = Date.now()
+
+  if (!treats.length) {
+    content.innerHTML = '<span style="color:var(--muted);font-size:clamp(11px,.85vw,15px)">Sem tratamentos activos</span>'
+    if (dot) dot.style.background = 'var(--muted)'
+    return
+  }
+
+  var html = ''
+  var anyAlert = false
+
+  for (var i=0; i<treats.length; i++) {
+    var t = treats[i]
+    var lastTs  = logs[t.id] || null
+    var lastMs  = lastTs ? new Date(lastTs).getTime() : null
+    var nextMs  = lastMs ? lastMs + t.periodicidade_horas * 3600000 : null
+    var atrasado = !nextMs || now > nextMs
+    if (atrasado) anyAlert = true
+
+    var statusHtml = ''
+    if (!lastMs) {
+      statusHtml = '<span class="treat-status" style="color:var(--danger)">Ainda nao tomou</span>'
+    } else if (atrasado) {
+      var min = Math.floor((now - nextMs) / 60000)
+      var txt = min < 60 ? min+'min' : Math.floor(min/60)+'h'+(min%60>0?' '+min%60+'min':'')
+      statusHtml = '<span class="treat-status" style="color:var(--danger)">Atrasado '+txt+'</span>'
+    } else {
+      var diff = Math.floor((nextMs - now) / 60000)
+      var txt2 = diff < 60 ? 'em '+diff+'min' : 'em '+Math.floor(diff/60)+'h'+(diff%60>0?' '+diff%60+'min':'')
+      statusHtml = '<span class="treat-status" style="color:var(--sage)">'+txt2+'</span>'
+    }
+
+    var bg     = atrasado ? 'rgba(224,112,112,0.12)' : 'rgba(109,184,138,0.08)'
+    var border = atrasado ? 'rgba(224,112,112,0.35)' : 'rgba(109,184,138,0.18)'
+    var dose   = t.dose ? ' &middot; '+t.dose+' '+t.unidade : ''
+
+    html += '<div class="treat-item" style="background:'+bg+';border:1px solid '+border+';">'
+    html += '<span class="treat-name">'+t.medicamento+dose+'</span>'
+    html += statusHtml
+    html += '</div>'
+  }
+
+  content.innerHTML = html
+
+  if (dot)  dot.style.background  = anyAlert ? 'var(--danger)' : 'var(--sage)'
+  if (card) {
+    card.style.borderColor = anyAlert ? 'rgba(224,112,112,0.4)' : 'var(--border)'
+    card.style.background  = anyAlert ? 'rgba(224,112,112,0.04)' : 'var(--surface)'
+  }
+}
+
+// ===================================================
+// SYNC STATUS
+// ===================================================
+function setSyncStatus(s) {
+  var el=document.getElementById('syncDot')
+  el.className='sync-dot '+s
+  el.textContent=s==='ok'?'sincronizado':s==='err'?'erro de ligacao':'a sincronizar...'
+}
+
+// ===================================================
+// INIT
+// ===================================================
+async function init() {
+  updateClock()
+  setInterval(updateClock, 1000)
+  setInterval(render, 1000)
+  setInterval(renderTreatments, 30000)
+
+  await Promise.all([fetchData(), fetchTreatments()])
+  render()
+  renderTreatments()
+
+  setInterval(async function() {
+    await Promise.all([fetchData(), fetchTreatments()])
+    render()
+    renderTreatments()
+  }, 20000)
+}
+
+init()
+</script>
+</body>
+</html>undefined
