@@ -71,7 +71,8 @@
   #card-deitar { grid-column:3; grid-row:2; }
 
   /* TRATAMENTOS */
-  #card-treat { grid-column:2/4; grid-row:3; }
+  #card-treat { grid-column:2; grid-row:3; }
+  #card-desp  { grid-column:3; grid-row:3; }
   .treat-item {
     display:inline-flex; flex-direction:column; gap:3px;
     padding:8px 16px; border-radius:12px;
@@ -107,7 +108,7 @@
 </head>
 <body class="state-ok">
 <div class="bg-glow"></div>
-<div class="name-badge">&#127807; martim</div>
+<div class="name-badge">&#127807; Martim</div>
 
 <div class="dashboard">
 
@@ -178,6 +179,12 @@
     </div>
   </div>
 
+  <div class="card" id="card-desp" style="grid-column:3;grid-row:3;">
+    <div class="card-label" id="despLabel"><div class="dot" id="despDot"></div>Despensa</div>
+    <div id="despContent" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
+      <span style="color:var(--muted);font-size:clamp(11px,.85vw,15px)">A carregar...</span>
+    </div>
+  </div>
 </div>
 
 <div class="sync-dot" id="syncDot">sincronizado</div>
@@ -186,9 +193,9 @@
 // ===================================================
 // CONFIG
 // ===================================================
-var SUPABASE_URL      = 'https://wkceuiexgauziaqyssag.supabase.co'
-var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrY2V1aWV4Z2F1emlhcXlzc2FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MzAxMjMsImV4cCI6MjA5MDMwNjEyM30.VO5m57Zlzml4V05M5Sdh3D6WP1Eve1-o55bPOCOIl-g'
-var CHILD_ID          = 'c2c0847c-6629-4160-bcb6-89b87adfe7c6'
+var SUPABASE_URL      = 'COLOCA_AQUI_O_SUPABASE_URL'
+var SUPABASE_ANON_KEY = 'COLOCA_AQUI_O_ANON_KEY'
+var CHILD_ID          = 'COLOCA_AQUI_O_ID_DO_MARTIM'
 
 var H = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
 
@@ -264,7 +271,13 @@ function fetchData() {
     S.dormiu    = p.dormiu  || null
     S.deitar    = p.deitar  || null
 
-    S.sleepingNight = !!(S.dormiu && !S.acordou)
+    // Nocturno: dormiu preenchido E (acordou vazio OU dormiu > acordou)
+    S.sleepingNight = (function() {
+      if (!S.dormiu) return false
+      if (!S.acordou) return true
+      var dp = S.dormiu.split(':').map(Number), ap = S.acordou.split(':').map(Number)
+      return (dp[0]*60+dp[1]) > (ap[0]*60+ap[1])
+    })()
     S.sleeping = false; S.sleepStart = null
 
     if (!S.sleepingNight) {
@@ -556,24 +569,67 @@ function setSyncStatus(s) {
 // ===================================================
 // INIT
 // ===================================================
+// === DESPENSA ===
+function fetchDespensa() {
+  return q('food_items', 'consumido=eq.false&select=numero,descricao,data_validade,child_target,local&order=data_validade.asc&limit=6')
+    .then(function(items) { window._despItems = items || [] })
+}
+
+function renderDespensa() {
+  var items = window._despItems || []
+  var content = document.getElementById('despContent')
+  var dot = document.getElementById('despDot')
+  var card = document.getElementById('card-desp')
+  if (!content) return
+  if (!items.length) {
+    content.innerHTML = '<span style="color:var(--muted);font-size:clamp(11px,.85vw,14px)">Despensa vazia</span>'
+    if (dot) dot.style.background = 'var(--muted)'
+    return
+  }
+  var now = new Date(); now.setHours(12,0,0,0)
+  var html = '', anyAlert = false
+  for (var i=0; i<items.length; i++) {
+    var item = items[i], dias = null
+    if (item.data_validade) {
+      var val = new Date(item.data_validade + 'T12:00')
+      dias = Math.round((val - now) / 86400000)
+    }
+    var cor = dias === null ? 'var(--muted)' : dias < 0 ? 'var(--danger)' : dias <= 2 ? 'var(--warn)' : 'var(--sage)'
+    var valTxt = dias === null ? '' : dias < 0 ? 'exp.' : dias === 0 ? 'hoje!' : dias + 'd'
+    if (dias !== null && dias <= 2) anyAlert = true
+    var localIcon = item.local === 'frigorifico' ? '🧊' : item.local === 'congelador' ? '❄️' : '📦'
+    html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">'
+    html += '<span style="font-family:monospace;font-weight:700;color:var(--earth);font-size:clamp(12px,1vw,16px);flex-shrink:0">#' + item.numero + '</span>'
+    html += '<span style="font-size:clamp(11px,.85vw,14px);color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + item.descricao + '</span>'
+    if (valTxt) html += '<span style="font-size:clamp(10px,.8vw,13px);font-weight:700;color:' + cor + ';flex-shrink:0;margin-left:4px">' + valTxt + '</span>'
+    html += '</div>'
+  }
+  content.innerHTML = html
+  if (dot) dot.style.background = anyAlert ? 'var(--warn)' : 'var(--sage)'
+  if (card) card.style.borderColor = anyAlert ? 'rgba(232,184,75,0.4)' : 'var(--border)'
+}
+// === FIM DESPENSA ===
+
 async function init() {
   updateClock()
   setInterval(updateClock, 1000)
   setInterval(render, 1000)
   setInterval(renderTreatments, 30000)
 
-  await Promise.all([fetchData(), fetchTreatments()])
+  await Promise.all([fetchData(), fetchTreatments(), fetchDespensa()])
   render()
   renderTreatments()
+  renderDespensa()
 
   setInterval(async function() {
-    await Promise.all([fetchData(), fetchTreatments()])
+    await Promise.all([fetchData(), fetchTreatments(), fetchDespensa()])
     render()
     renderTreatments()
+    renderDespensa()
   }, 20000)
 }
 
 init()
 </script>
 </body>
-</html>undefined
+</html>
