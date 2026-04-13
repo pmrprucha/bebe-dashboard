@@ -193,9 +193,9 @@
 // ===================================================
 // CONFIG
 // ===================================================
-var SUPABASE_URL      = 'https://wkceuiexgauziaqyssag.supabase.co'
-var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrY2V1aWV4Z2F1emlhcXlzc2FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MzAxMjMsImV4cCI6MjA5MDMwNjEyM30.VO5m57Zlzml4V05M5Sdh3D6WP1Eve1-o55bPOCOIl-g'
-var CHILD_ID          = 'c2c0847c-6629-4160-bcb6-89b87adfe7c6'
+var SUPABASE_URL      = 'COLOCA_AQUI_O_SUPABASE_URL'
+var SUPABASE_ANON_KEY = 'COLOCA_AQUI_O_ANON_KEY'
+var CHILD_ID          = 'COLOCA_AQUI_O_ID_DO_MARTIM'
 
 var H = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
 
@@ -271,12 +271,16 @@ function fetchData() {
     S.dormiu    = p.dormiu  || null
     S.deitar    = p.deitar  || null
 
-    // Nocturno: dormiu preenchido E (acordou vazio OU dormiu > acordou)
+    // Nocturno: dormiu existe E (acordou vazio OU dormiu nocturno e agora tambem nocturno)
     S.sleepingNight = (function() {
       if (!S.dormiu) return false
       if (!S.acordou) return true
-      var dp = S.dormiu.split(':').map(Number), ap = S.acordou.split(':').map(Number)
-      return (dp[0]*60+dp[1]) > (ap[0]*60+ap[1])
+      var now = new Date()
+      var nowMins = now.getHours()*60 + now.getMinutes()
+      var dp = S.dormiu.split(':').map(Number)
+      var dMins = dp[0]*60 + dp[1]
+      if (dMins >= 1080 && nowMins >= 1080 && nowMins >= dMins) return true
+      return false
     })()
     S.sleeping = false; S.sleepStart = null
 
