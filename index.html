@@ -271,17 +271,7 @@ function fetchData() {
     S.dormiu    = p.dormiu  || null
     S.deitar    = p.deitar  || null
 
-    // Nocturno: dormiu existe E (acordou vazio OU dormiu nocturno e agora tambem nocturno)
-    S.sleepingNight = (function() {
-      if (!S.dormiu) return false
-      if (!S.acordou) return true
-      var now = new Date()
-      var nowMins = now.getHours()*60 + now.getMinutes()
-      var dp = S.dormiu.split(':').map(Number)
-      var dMins = dp[0]*60 + dp[1]
-      if (dMins >= 1080 && nowMins >= 1080 && nowMins >= dMins) return true
-      return false
-    })()
+    S.sleepingNight = !!(S.dormiu && !S.acordou)
     S.sleeping = false; S.sleepStart = null
 
     if (!S.sleepingNight) {
@@ -404,7 +394,12 @@ function render() {
     if (gs==='alert'){ var g3=document.createElement('div'); g3.className='alert-glow'; ec.appendChild(g3) }
     ei.textContent='\u2600\uFE0F'; et.textContent='Acordado'
     et.style.color=gs==='alert'?'var(--danger)':'var(--warn)'
-    var refMs2=horaToMs(S.acordou)
+    // Acordado desde: fim da ultima sesta (mais recente) ou acordou
+    var lastNapEnd = null
+    var p2 = S.payload || {}
+    for (var nn=3; nn>=1; nn--) { if (p2['s'+nn+'_fim']) { lastNapEnd = horaToMs(p2['s'+nn+'_fim']); break } }
+    var acordouMs2 = horaToMs(S.acordou)
+    var refMs2 = (lastNapEnd && acordouMs2) ? Math.max(lastNapEnd, acordouMs2) : lastNapEnd || acordouMs2
     if (refMs2) {
       var secs=Math.max(0,Math.floor((now-refMs2)/1000))
       etr.style.display=secs<60?'none':'block'
